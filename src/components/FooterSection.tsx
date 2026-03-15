@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { GotaDeMercurioButton } from "@/components/GotaDeMercurioButton";
 
 const FooterSection = () => {
   return (
@@ -17,6 +18,9 @@ const FooterSection = () => {
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               La primera plataforma urbana 100% digitalizada de México. Real del Monte, Hidalgo.
             </p>
+            <div className="mt-4">
+              <GotaDeMercurioButton />
+            </div>
           </div>
 
           <div>
