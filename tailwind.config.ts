@@ -63,6 +63,15 @@ export default {
         silver: {
           chrome: "hsl(var(--silver-chrome))",
         },
+        "obsidian-deep": "#0A0A0B",
+        "bg-day": "#F7F3EB",
+        "bg-evening-start": "#F6D6A8",
+        "bg-evening-end": "#FBEFCC",
+        "bg-night": "#0A0A0B",
+        "silver-light": "#E5E4E2",
+        "silver-medium": "#8E8E8E",
+        "crystal-glow": "#F0F8FF",
+        "pearl-white": "#FDFDFD",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -81,6 +90,10 @@ export default {
       },
       backdropBlur: {
         '3xl': '64px',
+        18: '18px',
+      },
+      boxShadow: {
+        'glass-silver': '0 0 0 1px rgba(229, 228, 226, 0.25), 0 18px 45px rgba(0,0,0,0.45)',
       },
       keyframes: {
         "accordion-down": {

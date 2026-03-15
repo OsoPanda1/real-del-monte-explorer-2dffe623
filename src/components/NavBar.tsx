@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { GotaDeMercurioButton } from "@/components/GotaDeMercurioButton";
 
 const navSections = [
   {
@@ -112,7 +113,10 @@ const NavBar = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="hidden xl:block">
+              <GotaDeMercurioButton compact />
+            </div>
             <Link to="/catalogo">
               <motion.span
                 whileHover={{ scale: 1.02 }}
@@ -164,6 +168,9 @@ const NavBar = () => {
               <Link to="/catalogo" className="block">
                 <span className="btn-sovereign bg-primary text-primary-foreground text-xs inline-block">Registrar Negocio</span>
               </Link>
+              <div>
+                <GotaDeMercurioButton compact />
+              </div>
             </div>
           </motion.div>
         )}

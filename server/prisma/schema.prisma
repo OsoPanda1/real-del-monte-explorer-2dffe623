@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  VISITOR
+  MERCHANT
+  ADMIN
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String?
+  role         Role          @default(VISITOR)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  businesses   Business[]
+  donations    Donation[]
+  interactions Interaction[]
+}
+
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  plan        String   @default("basic")
+  latitude    Float
+  longitude   Float
+  address     String?
+  isActive    Boolean  @default(true)
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startsAt    DateTime
+  endsAt      DateTime?
+  location    String?
+  latitude    Float?
+  longitude   Float?
+}
+
+model Route {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+}
+
+model Destination {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  latitude    Float
+  longitude   Float
+  kind        String
+}
+
+model Donation {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  amount     Int
+  currency   String   @default("mxn")
+  provider   String   @default("stripe")
+  providerId String
+  createdAt  DateTime @default(now())
+}
+
+model Interaction {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  kind       String
+  businessId String?
+  context    String?
+  createdAt  DateTime @default(now())
+}

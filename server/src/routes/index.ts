@@ -1,0 +1,18 @@
+import { Router } from "express";
+import authRouter from "./auth.js";
+import businessesRouter from "./businesses.js";
+import donationsRouter from "./donations.js";
+import weatherRouter from "./weather.js";
+import recommendationsRouter from "./recommendations.js";
+import aiRouter from "./ai.js";
+
+const apiRouter = Router();
+
+apiRouter.use("/auth", authRouter);
+apiRouter.use("/businesses", businessesRouter);
+apiRouter.use("/donations", donationsRouter);
+apiRouter.use("/weather", weatherRouter);
+apiRouter.use("/recommendations", recommendationsRouter);
+apiRouter.use("/ai", aiRouter);
+
+export default apiRouter;

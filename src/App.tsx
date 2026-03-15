@@ -4,6 +4,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { VisualProvider } from "@/contexts/VisualContext";
+import { AppShell } from "@/components/AppShell";
 
 const Index = lazy(() => import("./pages/Index"));
 const Historia = lazy(() => import("./pages/Historia"));
@@ -18,6 +20,9 @@ const Eventos = lazy(() => import("./pages/Eventos"));
 const Comunidad = lazy(() => import("./pages/Comunidad"));
 const Catalogo = lazy(() => import("./pages/Catalogo"));
 const QuienesSomos = lazy(() => import("./pages/QuienesSomos"));
+const Donar = lazy(() => import("./pages/Donar"));
+const GraciasDonativo = lazy(() => import("./pages/GraciasDonativo"));
+const ComerciosPanel = lazy(() => import("./pages/ComerciosPanel"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -33,9 +38,11 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={<Loading />}>
-          <Routes>
+      <VisualProvider>
+        <AppShell>
+          <BrowserRouter>
+            <Suspense fallback={<Loading />}>
+              <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/historia" element={<Historia />} />
             <Route path="/cultura" element={<Cultura />} />
@@ -49,10 +56,15 @@ const App = () => (
             <Route path="/comunidad" element={<Comunidad />} />
             <Route path="/catalogo" element={<Catalogo />} />
             <Route path="/quienes-somos" element={<QuienesSomos />} />
+            <Route path="/donar" element={<Donar />} />
+            <Route path="/gracias-donativo" element={<GraciasDonativo />} />
+            <Route path="/comercios/panel" element={<ComerciosPanel />} />
             <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AppShell>
+      </VisualProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
