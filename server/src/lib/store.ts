@@ -27,6 +27,44 @@ export interface DonationRecord {
   createdAt: string;
 }
 
+
+export interface TwinRecord {
+  id: string;
+  modelId: string;
+  businessId: string;
+  name: string;
+  tags: string[];
+  state: {
+    desired: Record<string, string | number | boolean>;
+    reported: Record<string, string | number | boolean>;
+    telemetry: Record<string, number>;
+  };
+  scene: {
+    renderer: "webgl" | "webxr";
+    stylePreset: "heritage" | "festival" | "nature";
+    pbr: boolean;
+    hdri: string;
+    postprocess: string[];
+  };
+  graph: {
+    incoming: string[];
+    outgoing: string[];
+  };
+  guideAvatar: {
+    style: "realista" | "cinematico";
+    locale: "es-MX";
+    voice: string;
+  };
+  updatedAt: string;
+}
+
+export interface TwinEventRecord {
+  id: string;
+  twinId: string;
+  kind: string;
+  payload: Record<string, string | number | boolean>;
+  createdAt: string;
+}
 export interface InteractionRecord {
   id: string;
   kind: string;
@@ -41,4 +79,6 @@ export const db = {
   businesses: new Map<string, BusinessRecord>(),
   donations: new Map<string, DonationRecord>(),
   interactions: new Map<string, InteractionRecord>(),
+  digitalTwins: new Map<string, TwinRecord>(),
+  twinEvents: new Map<string, TwinEventRecord>(),
 };

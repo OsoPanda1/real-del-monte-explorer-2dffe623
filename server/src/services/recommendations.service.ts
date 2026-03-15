@@ -1,4 +1,5 @@
 import { db } from "../lib/store.js";
+import { computeTwinOperationalScore, ensureBusinessTwin } from "./digital-twins.service.js";
 
 interface RecommendationInput {
   intent: string;
@@ -24,8 +25,10 @@ export function recommendBusinesses({ intent }: RecommendationInput) {
     .filter((business) => business.isActive)
     .map((business) => {
       const relevance = targetCategory && business.category === targetCategory ? 3 : 1;
-      const score = relevance * 10 + (planWeight[business.plan] ?? 1);
-      return { ...business, score };
+      const twin = ensureBusinessTwin(business);
+      const twinOperationalScore = computeTwinOperationalScore(twin);
+      const score = relevance * 10 + (planWeight[business.plan] ?? 1) + twinOperationalScore;
+      return { ...business, score, twinOperationalScore, twinId: twin.id };
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
