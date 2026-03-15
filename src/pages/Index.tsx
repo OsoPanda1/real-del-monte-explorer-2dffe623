@@ -1,6 +1,7 @@
 import NavBar from "@/components/NavBar";
 import HeroSection from "@/components/HeroSection";
 import SitesSection from "@/components/SitesSection";
+import QuickLinksSection from "@/components/QuickLinksSection";
 import MapSection from "@/components/MapSection";
 import MerchantCatalog from "@/components/MerchantCatalog";
 import FooterSection from "@/components/FooterSection";
@@ -12,7 +13,10 @@ const Index = () => {
       <NavBar />
       <HeroSection />
       <SitesSection />
-      <MapSection />
+      <QuickLinksSection />
+      <div id="mapa">
+        <MapSection />
+      </div>
       <MerchantCatalog />
       <FooterSection />
       <RealitoOrb />

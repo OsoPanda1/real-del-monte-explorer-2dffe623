@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import heroImg from "@/assets/hero-rdm.jpg";
 
 const HeroSection = () => {
@@ -56,22 +57,24 @@ const HeroSection = () => {
           </p>
 
           <div className="flex flex-wrap gap-4">
-            <motion.a
-              href="#explorar"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="btn-sovereign bg-primary text-primary-foreground"
-            >
-              Explorar el Gemelo Digital
-            </motion.a>
-            <motion.a
-              href="#comercios"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="btn-sovereign bg-foreground/10 text-foreground border border-foreground/20"
-            >
-              Unirse a la Federación
-            </motion.a>
+            <Link to="/rutas">
+              <motion.span
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="btn-sovereign bg-primary text-primary-foreground inline-block"
+              >
+                Explorar Rutas
+              </motion.span>
+            </Link>
+            <Link to="/catalogo">
+              <motion.span
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="btn-sovereign bg-foreground/10 text-foreground border border-foreground/20 inline-block"
+              >
+                Catálogo Digital
+              </motion.span>
+            </Link>
           </div>
         </motion.div>
 
