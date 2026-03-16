@@ -8,6 +8,10 @@ export interface RealitoMessage {
 
 interface RealitoChatResponse {
   reply?: string;
+  trace?: {
+    interactionId: string;
+    source: string;
+  };
 }
 
 export function useRealitoChat() {
@@ -20,6 +24,7 @@ export function useRealitoChat() {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [lastTraceId, setLastTraceId] = useState<string | null>(null);
 
   const send = useCallback(async (content: string) => {
     const text = content.trim();
@@ -35,10 +40,18 @@ export function useRealitoChat() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/ai/realito", {
+      const nextHistory = [...messages, userMessage].map((message) => ({
+        role: message.role,
+        content: message.content,
+      }));
+
+      const response = await fetch("/api/realito/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({
+          history: nextHistory,
+          context: { queryType: text },
+        }),
       });
 
       if (!response.ok) {
@@ -46,6 +59,10 @@ export function useRealitoChat() {
       }
 
       const payload = (await response.json()) as RealitoChatResponse;
+      if (payload.trace?.interactionId) {
+        setLastTraceId(payload.trace.interactionId);
+      }
+
       setMessages((prev) => [
         ...prev,
         {
@@ -60,13 +77,13 @@ export function useRealitoChat() {
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: "Por ahora estoy en modo local. Te recomiendo iniciar en el Centro Histórico y Mina La Acosta.",
+          content: "Ahora estoy en modo de respaldo. Te sugiero Centro Histórico, Mina La Acosta y la Ruta Gastronómica del Paste.",
         },
       ]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [messages]);
 
-  return { messages, isLoading, send };
+  return { messages, isLoading, send, lastTraceId };
 }

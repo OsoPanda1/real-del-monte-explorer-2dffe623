@@ -2,13 +2,16 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import PageHero from "@/components/PageHero";
 import heroImg from "@/assets/historia-hero.jpg";
-import { routes } from "@/data/rdm-data";
+import { routes as localRoutes } from "@/data/rdm-data";
+import { useRoutesApi } from "@/hooks/useTourismContent";
 import NavBar from "@/components/NavBar";
 import FooterSection from "@/components/FooterSection";
 import RealitoOrb from "@/components/RealitoOrb";
 
 const Rutas = () => {
   const [selected, setSelected] = useState<string | null>(null);
+  const { data: apiRoutes } = useRoutesApi();
+  const routes = apiRoutes.length ? apiRoutes : localRoutes;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -34,9 +37,9 @@ const Rutas = () => {
                 onClick={() => setSelected(selected === route.id ? null : route.id)}
                 className="glass-surface overflow-hidden cursor-pointer group hover:glow-cyan transition-all duration-500"
               >
-                <div className={`h-1.5 bg-gradient-to-r ${route.color} opacity-60 group-hover:opacity-100 transition-opacity`} />
+                <div className={`h-1.5 bg-gradient-to-r ${route.color ?? "from-primary to-cyan-300"} opacity-60 group-hover:opacity-100 transition-opacity`} />
                 <div className="p-6">
-                  <span className="text-3xl mb-3 block">{route.icon}</span>
+                  <span className="text-3xl mb-3 block">{route.icon ?? "🧭"}</span>
                   <h3 className="text-xl font-bold tracking-tight mb-1">{route.name}</h3>
                   <div className="flex gap-4 mb-3">
                     <span className="font-mono text-[10px] uppercase tracking-widest text-primary">{route.difficulty}</span>

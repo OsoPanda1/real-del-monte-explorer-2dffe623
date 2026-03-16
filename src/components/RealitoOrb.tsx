@@ -16,7 +16,7 @@ const orbVariants = {
 const RealitoOrb = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
-  const { messages, isLoading, send } = useRealitoChat();
+  const { messages, isLoading, send, lastTraceId } = useRealitoChat();
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -78,6 +78,11 @@ const RealitoOrb = () => {
               {isLoading && <div className="text-xs text-silver-light font-mono">Realito está analizando contexto…</div>}
             </div>
 
+            {lastTraceId && (
+              <div className="px-4 py-2 border-t border-silver-light/20 font-mono text-[10px] text-silver-light/80">
+                Trace: {lastTraceId.slice(0, 8)}
+              </div>
+            )}
             <div className="p-3 border-t border-silver-light/20">
               <div className="flex gap-2">
                 <input
