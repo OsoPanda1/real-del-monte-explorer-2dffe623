@@ -5,7 +5,7 @@ import { useRealitoChat } from "@/hooks/useRealitoChat";
 const orbVariants = {
   idle: {
     scale: [1, 1.08, 1],
-    transition: { repeat: Infinity, duration: 3.5, ease: "easeInOut" },
+    transition: { repeat: Infinity, duration: 3.5, ease: "easeInOut" as const },
   },
   active: {
     scale: 1.12,
