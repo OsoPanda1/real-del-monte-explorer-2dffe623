@@ -6,6 +6,10 @@ import weatherRouter from "./weather.js";
 import recommendationsRouter from "./recommendations.js";
 import aiRouter from "./ai.js";
 import digitalTwinsRouter from "./digital-twins.js";
+import placesRouter from "./places.js";
+import merchantsRouter from "./merchants.js";
+import twinsRouter from "./twins.js";
+import realitoRouter from "./realito.js";
 
 const apiRouter = Router();
 
@@ -16,5 +20,9 @@ apiRouter.use("/weather", weatherRouter);
 apiRouter.use("/recommendations", recommendationsRouter);
 apiRouter.use("/ai", aiRouter);
 apiRouter.use("/digital-twins", digitalTwinsRouter);
+apiRouter.use("/places", placesRouter);
+apiRouter.use("/merchants", merchantsRouter);
+apiRouter.use("/twins", twinsRouter);
+apiRouter.use("/realito", realitoRouter);
 
 export default apiRouter;
