@@ -8,6 +8,14 @@ import aiRouter from "./ai.js";
 import digitalTwinsRouter from "./digital-twins.js";
 import contentRouter from "./content.js";
 import realitoRouter from "./realito.js";
+import auditRouter from "./audit.js";
+import xrRouter from "./xr.js";
+import economyRouter from "./economy.js";
+import protocolsRouter from "./protocols.js";
+import streamsRouter from "./streams.js";
+import socialRouter from "./social.js";
+import profilesRouter from "./profiles.js";
+import usersRouter from "./users.js";
 
 const apiRouter = Router();
 
@@ -20,5 +28,13 @@ apiRouter.use("/ai", aiRouter);
 apiRouter.use("/digital-twins", digitalTwinsRouter);
 apiRouter.use("/content", contentRouter);
 apiRouter.use("/realito", realitoRouter);
+apiRouter.use("/users", usersRouter);
+apiRouter.use("/profiles", profilesRouter);
+apiRouter.use("/social", socialRouter);
+apiRouter.use("/streams", streamsRouter);
+apiRouter.use("/protocols", protocolsRouter);
+apiRouter.use("/economy", economyRouter);
+apiRouter.use("/xr", xrRouter);
+apiRouter.use("/audit", auditRouter);
 
 export default apiRouter;
