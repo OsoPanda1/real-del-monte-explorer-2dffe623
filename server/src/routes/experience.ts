@@ -7,8 +7,13 @@ import { z } from "zod";
 import { optimizeRoute } from "../experience/geneticOptimizer.js";
 import { buildTwinsContext, getTwinById, getTwinsByType } from "../experience/twinContextBuilder.js";
 import type { UserPreferences } from "../experience/types.js";
+import { config } from "../config.js";
+import { createRateLimiter } from "../middleware/rateLimit.js";
+import { sendError } from "../middleware/http.js";
 
 const experienceRouter = Router();
+
+experienceRouter.use("/plan", createRateLimiter(config.rateLimitMaxRequests, config.rateLimitWindowMs));
 
 const planSchema = z.object({
   availableMinutes: z.number().int().min(30).max(720).optional().default(180),
@@ -25,7 +30,7 @@ experienceRouter.post("/plan", async (req, res, next) => {
   try {
     const parsed = planSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.flatten() });
+      return sendError(res, 400, "VALIDATION_ERROR", "Invalid experience plan payload", parsed.error.flatten());
     }
 
     const prefs: UserPreferences = {
@@ -60,7 +65,7 @@ experienceRouter.get("/twins", (_req, res) => {
 experienceRouter.get("/twins/:id", (req, res) => {
   const twin = getTwinById(req.params.id);
   if (!twin) {
-    return res.status(404).json({ error: "Twin no encontrado." });
+    return sendError(res, 404, "TWIN_NOT_FOUND", "Twin no encontrado.");
   }
   return res.json(twin);
 });
