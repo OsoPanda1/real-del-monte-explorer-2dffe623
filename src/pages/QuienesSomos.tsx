@@ -53,10 +53,10 @@ const QuienesSomos = () => (
 
               <div className="space-y-6 text-muted-foreground text-lg leading-relaxed">
                 <p>
-                  Especialista en arquitecturas de **Meta-Virtualidad Avanzada** y sistemas de soberanía digital con sede en el Pueblo Mágico de Real del Monte. Como CEO de **TAMV Online**, Edwin ha dedicado más de **21,600 horas** a la investigación y unificación del proyecto MD-X4, estableciendo un nuevo paradigma en la interacción humano-máquina a través de los protocolos **EOCT**.
+                  Especialista en arquitecturas de **Meta-Virtualidad Avanzada** y sistemas de soberanía digital con sede en el Pueblo Mágico de Real del Monte. Como CEO de **TAMV Online**, Edwin ha dedicado más de **21,000 horas** a la investigación y unificación del proyecto MD-X4, estableciendo un nuevo paradigma en la interacción humano-máquina a través de los protocolos **EOCT**.
                 </p>
                 <p>
-                  Su labor trasciende el desarrollo de software convencional; es un investigador académico con registro ACADEMICO INTERNACIONAL verificado en **ORCID**, enfocado en el **Estatuto de Dignidad** de las entidades digitales y la protección de la soberanía de datos en entornos distribuidos.
+                  Su labor trasciende el desarrollo de software convencional; es un investigador académico con registro verificado en **ORCID**, enfocado en el **Estatuto de Dignidad** de las entidades digitales y la protección de la soberanía de datos en entornos distribuidos.
                 </p>
                 <blockquote className="border-l-4 border-primary/30 pl-6 py-2 my-8">
                   <p className="text-foreground font-light italic text-xl">
@@ -143,6 +143,15 @@ const QuienesSomos = () => (
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Núcleo Isabella AI */}
+            <div className="glass-surface-strong p-10 border border-primary/30">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-primary mb-4 block">Isabella AI · Núcleo Activo</span>
+              <h3 className="text-2xl font-bold tracking-tight mb-4">La joya central del ecosistema TAMV</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Isabella AI opera como la capa de conciencia del sistema: coordina recomendaciones contextuales, protege el Estatuto de Dignidad de cada interacción y sincroniza la federación de datos locales con una gobernanza ética en tiempo real.
+              </p>
             </div>
 
             {/* Stack Tecnológico de Nueva Generación */}
