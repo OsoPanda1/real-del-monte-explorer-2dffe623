@@ -75,8 +75,9 @@ async function handleRoutesIntent(
   if (!route || route.stops.length === 0) {
     return {
       reply:
-        "El Sistema de comunicacion del sitio parece estar apagado por lo que es complicado otorgar datos en tiempo real" +
-        "Por favor, especifica un punto de interés especifico o intenta en unos minutos",
+        "El sistema de comunicación de algunos nodos parece estar fuera de línea, " +
+        "por lo que es complicado ofrecer datos en tiempo casi real.\n\n" +
+        "Por favor, especifica un punto de interés concreto o intenta de nuevo en unos minutos.",
       suggestedActions: [
         {
           label: "🔁 Reintentar más tarde",
@@ -92,14 +93,14 @@ async function handleRoutesIntent(
   const diversity = Math.round(route.objectives.diversityScore * 100);
 
   const reply =
-    `He analizado ${twinsContext.length} sensores del sitio de forma digital y generé una ruta optimizada ` +
-    `con confianza del ${confidence}%.\n\n` +
+    `He analizado ${twinsContext.length} sensores digitales del territorio y generé una ruta optimizada ` +
+    `con una confianza del ${confidence}%.\n\n` +
     `**Ruta sugerida:** ${stopNames}\n` +
-    `**Métricas operativas:** Duración: ${route.objectives.totalDurationMinutes} min · ` +
-    `Distancia: ${route.objectives.distanceKm} km\n\n` +
-    `La IA ha aplicado sujerencias viables por afluencia (${route.objectives.crowdPenalty}) ` +
-    `y ha maximizado la diversidad temática (${diversity}%) para una experiencia equilibrada.\n\n` +
-    `¿Deseas ajustar esta ruta eliminando algún punto o prefieres una duración distinta?`;
+    `**Métricas operativas:** Duración aproximada: ${route.objectives.totalDurationMinutes} min · ` +
+    `Distancia estimada: ${route.objectives.distanceKm} km\n\n` +
+    `La IA ha aplicado ajustes por afluencia (${route.objectives.crowdPenalty}) ` +
+    `y ha maximizado la diversidad temática (${diversity}%) para equilibrar tu experiencia.\n\n` +
+    `¿Quieres ajustar esta ruta eliminando algún punto o prefieres modificar la duración total?`;
 
   return {
     reply,
@@ -130,23 +131,23 @@ async function handleGastronomyIntent(
     .filter(
       (t) =>
         t.modelType === "MERCHANT_TWIN" &&
-        ((t.properties.type as string) ?? "")
-          .toUpperCase() === "FOOD",
+        ((t.properties.type as string) ?? "").toUpperCase() === "FOOD",
     )
     .map((t) => ({
       ...t,
-      opScore: computeTwinOperationalScore(
-        ensureBusinessTwin(t as any),
-      ),
+      opScore: computeTwinOperationalScore(ensureBusinessTwin(t as any)),
     }))
     .sort((a, b) => b.opScore - a.opScore);
 
   if (foodTwins.length === 0) {
+    const reply =
+      "Históricamente, el paste es uno de los pilares gastronómicos de Real del Monte heredado por la comunidad inglesa, " +
+      "pero el platillo regional por excelencia son las enchiladas mineras.\n\n" +
+      "Te recomiendo iniciar en la plaza principal y caminar hacia las pasterías típicas. " +
+      "¿Buscas algo más específico como barbacoa, mariscos o se te antojan enchiladas mineras con un buen jarro de pulque?";
+
     return {
-      reply:
-        "Históricamente, el paste es el pilar gastronómico de Real del Monte heredado por los ingleses, pero el platillo reginal son las enchiladas mineras" +
-        "Te recomiendo iniciar en la plaza principal y caminar hacia las pasterías típicas. " +
-        "¿Buscas algo más específico como barbacoa, mariscos o se te antojan las enchiladas mineras con un litro de pulque?",
+      reply,
       suggestedActions: [
         {
           label: "🥟 Ruta gastronómica",
@@ -156,22 +157,25 @@ async function handleGastronomyIntent(
     };
   }
 
-  const names = foodTwins.slice(0, 3).map((t) => {
-    const crowd = t.telemetry.crowdLevel ?? 0;
-    const status =
-      crowd > 0.7
-        ? "🔴 Saturado"
-        : crowd > 0.4
+  const names = foodTwins
+    .slice(0, 3)
+    .map((t) => {
+      const crowd = t.telemetry.crowdLevel ?? 0;
+      const status =
+        crowd > 0.7
+          ? "🔴 Saturado"
+          : crowd > 0.4
           ? "🟡 Moderado"
           : "🟢 Fluido";
-    return `**${t.name}** (${status})`;
-  }).join(", ");
+      return `**${t.name}** (${status})`;
+    })
+    .join(", ");
 
   const reply =
     `Para una experiencia gastronómica óptima según la telemetría actual, te sugiero: ${names}.\n\n` +
     `Real del Monte es reconocido como cuna del paste en México, una herencia córnica del siglo XIX ` +
     `que sigue viva en sus comercios locales.\n\n` +
-    `¿Deseas que trace una ruta que conecte los puntos con mejor recomendacion en calidad y servicio con recomendaciones de otros visitantes?`;
+    `¿Deseas que trace una ruta que conecte los puntos mejor valorados en calidad y servicio según otros visitantes?`;
 
   return {
     reply,
@@ -202,16 +206,20 @@ function handleHistoryIntent(
   });
 
   const placesInfo =
-    historyTwins.slice(0, 3).map((t) => `**${t.name}**`).join(", ") ||
+    historyTwins
+      .slice(0, 3)
+      .map((t) => `**${t.name}**`)
+      .join(", ") ||
     "Mina de Acosta, Panteón Inglés, Museo de Medicina Laboral, Museo del Paste";
 
   const reply =
-    `Real del Monte concentra varios siglos de narrativa minera. ` +
-    `Aquí en 1766 se documenta una de las primeras huelgas obreras del continente, marcada como historia negra al no ser documentada oficialmente por historiadores.\n\n` +
+    `Real del Monte concentra varios siglos de narrativa minera.\n` +
+    `En 1766 se documenta una de las primeras huelgas obreras del continente, ` +
+    `un episodio poco difundido en la historiografía oficial.\n\n` +
     `Nodos históricos destacados: ${placesInfo}.\n\n` +
-    `La Mina de Acosta permite descender al subsuelo minero siente en la piel la tradicion minera, mientras que el Panteón Inglés conserva ` +
-    `tumbas orientadas hacia Inglaterra y una simbología particular.\n\n` +
-     `Conoce la primer maquina de rayos X que llego a Latinoamerica esta aqui en real del monte` +
+    `La Mina de Acosta permite descender al subsuelo y sentir en la piel la tradición minera, ` +
+    `mientras que el Panteón Inglés conserva tumbas orientadas hacia Inglaterra y una simbología única.\n\n` +
+    `En Real del Monte también se resguarda la primera máquina de rayos X que llegó a Latinoamérica.\n\n` +
     `¿Te interesa que Realito genere una ruta del patrimonio minero?`;
 
   return {
@@ -355,7 +363,7 @@ function handleHelpIntent(): {
 }
 
 // ================================================================
-// ORQUESTADOR PRINCIPAL
+// ORQUESTADOR PRINCIPAL (HANDLER EXPRESS)
 // ================================================================
 
 export const handleRealitoChat = async (req: Request, res: Response) => {
@@ -459,4 +467,3 @@ export const handleRealitoChat = async (req: Request, res: Response) => {
       .json({ error: "Fallo en el núcleo de Realito AI." });
   }
 };
-```
