@@ -22,7 +22,7 @@ const chatSchema = z.object({
           lng: z.number(),
         })
         .optional(),
-      queryType: z.string().min(2).optional(),
+      queryType: z.string().min(1).optional(),
     })
     .optional(),
 });
