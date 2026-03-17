@@ -35,18 +35,18 @@ interface TwinsResponse {
 }
 
 const typeColors: Record<string, string> = {
-  HISTORIC: "#00f3ff",
-  MUSEUM: "#ffd700",
-  MINE: "#ffd700",
-  RELIGIOUS: "#c084fc",
-  VIEWPOINT: "#00ff88",
-  NATURE: "#00ff88",
-  FOOD: "#ff8c00",
-  LODGING: "#ff6b9d",
-  HANDCRAFTS: "#c084fc",
-  ACTIVITY: "#22d3ee",
-  BAR: "#f97316",
-  CULTURE: "#a78bfa",
+  HISTORIC: "#71d9ff",
+  MUSEUM: "#f7c873",
+  MINE: "#f7c873",
+  RELIGIOUS: "#b79aff",
+  VIEWPOINT: "#74e3c7",
+  NATURE: "#66d4b2",
+  FOOD: "#f8a16f",
+  LODGING: "#e39cca",
+  HANDCRAFTS: "#c5a3ff",
+  ACTIVITY: "#6cc8f8",
+  BAR: "#f6a47c",
+  CULTURE: "#9eb3ff",
 };
 
 const typeLabels: Record<string, string> = {
@@ -65,14 +65,14 @@ const typeLabels: Record<string, string> = {
 };
 
 function crowdBadge(level: number): string {
-  if (level > 0.7) return '<span style="color:#ff4444;font-size:10px;">● Alta ocupación</span>';
-  if (level > 0.4) return '<span style="color:#ffaa00;font-size:10px;">● Moderado</span>';
-  return '<span style="color:#00ff88;font-size:10px;">● Tranquilo</span>';
+  if (level > 0.7) return '<span style="color:#f58ca6;font-size:10px;">● Alta ocupación</span>';
+  if (level > 0.4) return '<span style="color:#f2c27d;font-size:10px;">● Moderado</span>';
+  return '<span style="color:#7ad6b8;font-size:10px;">● Tranquilo</span>';
 }
 
 function immersionBadge(level: string): string {
-  const colors: Record<string, string> = { L1: "#888", L2: "#00f3ff", L3: "#ffd700" };
-  return `<span style="color:${colors[level] ?? "#888"};font-size:10px;font-family:'IBM Plex Mono',monospace;">Inmersión ${level}</span>`;
+  const colors: Record<string, string> = { L1: "#9ca3af", L2: "#7cccf3", L3: "#f2c27d" };
+  return `<span style="color:${colors[level] ?? "#9ca3af"};font-size:10px;font-family:'IBM Plex Mono',monospace;">Inmersión ${level}</span>`;
 }
 
 // Fallback twins when API is unavailable
@@ -121,7 +121,7 @@ const MapSection = () => {
 
     mapInstanceRef.current = map;
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       maxZoom: 19,
     }).addTo(map);
 
@@ -146,8 +146,8 @@ const MapSection = () => {
         className: "custom-marker",
         html: `<div style="
           width: ${size}px; height: ${size}px; border-radius: 50%;
-          background: ${color}; border: 2px solid rgba(0,0,0,0.5);
-          box-shadow: 0 0 14px ${color}80;
+          background: radial-gradient(circle at 35% 35%, #ffffff 0%, ${color} 35%, ${color} 100%); border: 2px solid rgba(255,255,255,0.75);
+          box-shadow: 0 0 0 2px rgba(17,24,39,0.25), 0 0 18px ${color}90;
           opacity: ${opacity};
           animation: nodePulse 3s ease-in-out infinite;
         "></div>`,
@@ -157,8 +157,8 @@ const MapSection = () => {
 
       const popupContent = `
         <div style="
-          background: #0d0d0d; color: #f0f0f0; padding: 16px 20px;
-          border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
+          background: linear-gradient(145deg, #f9fafc, #eef3fb); color: #0f172a; padding: 16px 20px;
+          border-radius: 14px; border: 1px solid rgba(148,163,184,0.35); box-shadow: 0 8px 30px rgba(15,23,42,0.12);
           font-family: 'Inter', sans-serif; min-width: 200px; max-width: 260px;
         ">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -168,12 +168,12 @@ const MapSection = () => {
             ${immersionBadge(immersion)}
           </div>
           <div style="font-size:15px; font-weight:600; margin-bottom:8px;">${twin.name}</div>
-          ${twin.properties.narrative ? `<div style="font-size:12px; color:#999; line-height:1.4; margin-bottom:8px;">${(twin.properties.narrative as string).substring(0, 140)}…</div>` : ""}
+          ${twin.properties.narrative ? `<div style="font-size:12px; color:#475569; line-height:1.4; margin-bottom:8px;">${(twin.properties.narrative as string).substring(0, 140)}…</div>` : ""}
           <div style="display:flex;justify-content:space-between;align-items:center;">
             ${crowdBadge(crowd)}
-            ${twin.telemetry.avgStayMinutes ? `<span style="font-size:10px;color:#666;font-family:'IBM Plex Mono',monospace;">~${twin.telemetry.avgStayMinutes} min</span>` : ""}
+            ${twin.telemetry.avgStayMinutes ? `<span style="font-size:10px;color:#64748b;font-family:'IBM Plex Mono',monospace;">~${twin.telemetry.avgStayMinutes} min</span>` : ""}
           </div>
-          ${twin.telemetry.queueMinutes ? `<div style="font-size:10px;color:#888;margin-top:4px;">Espera: ~${twin.telemetry.queueMinutes} min</div>` : ""}
+          ${twin.telemetry.queueMinutes ? `<div style="font-size:10px;color:#64748b;margin-top:4px;">Espera: ~${twin.telemetry.queueMinutes} min</div>` : ""}
         </div>`;
 
       L.marker([twin.lat, twin.lng], { icon })
@@ -243,7 +243,7 @@ const MapSection = () => {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="glass-surface overflow-hidden glow-cyan"
+          className="glass-surface overflow-hidden glow-cyan ring-1 ring-primary/30"
         >
           <div ref={mapRef} className="w-full h-[500px] md:h-[600px]" />
         </motion.div>
@@ -253,10 +253,10 @@ const MapSection = () => {
           {[
             { label: "Museos/Minas", color: "bg-secondary" },
             { label: "Histórico", color: "bg-primary" },
-            { label: "Miradores", colorHex: "#00ff88" },
-            { label: "Gastronomía", colorHex: "#ff8c00" },
-            { label: "Hospedaje", colorHex: "#ff6b9d" },
-            { label: "Comercios", colorHex: "#c084fc" },
+            { label: "Miradores", colorHex: "#74e3c7" },
+            { label: "Gastronomía", colorHex: "#f8a16f" },
+            { label: "Hospedaje", colorHex: "#e39cca" },
+            { label: "Comercios", colorHex: "#c5a3ff" },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2">
               <div

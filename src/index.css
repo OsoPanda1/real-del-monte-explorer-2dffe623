@@ -6,33 +6,33 @@
 
 @layer base {
   :root {
-    --background: 0 0% 2%;
-    --foreground: 200 10% 96%;
+    --background: 222 33% 98%;
+    --foreground: 221 39% 13%;
 
-    --card: 0 0% 5%;
-    --card-foreground: 200 10% 96%;
+    --card: 210 60% 99%;
+    --card-foreground: 221 39% 13%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 200 10% 96%;
+    --popover: 210 60% 99%;
+    --popover-foreground: 221 39% 13%;
 
-    --primary: 187 100% 48%;
-    --primary-foreground: 0 0% 2%;
+    --primary: 193 86% 42%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 45 100% 50%;
-    --secondary-foreground: 0 0% 2%;
+    --secondary: 33 92% 58%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 214 35% 92%;
+    --muted-foreground: 215 19% 38%;
 
-    --accent: 187 100% 48%;
-    --accent-foreground: 0 0% 2%;
+    --accent: 194 75% 90%;
+    --accent-foreground: 221 39% 13%;
 
     --destructive: 340 100% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 100% / 0.08;
-    --input: 0 0% 100% / 0.08;
-    --ring: 187 100% 48%;
+    --border: 215 32% 82%;
+    --input: 215 32% 82%;
+    --ring: 193 86% 42%;
 
     --radius: 1rem;
 
@@ -47,18 +47,18 @@
     --font-display: 'Inter', system-ui, sans-serif;
     --font-mono: 'IBM Plex Mono', monospace;
 
-    --shadow-ghost: 0 0 0 1px rgba(255,255,255,0.05), 0 10px 30px -10px rgba(0,0,0,0.5);
-    --shadow-glow-cyan: 0 0 30px rgba(0, 243, 255, 0.15);
-    --shadow-glow-gold: 0 0 30px rgba(255, 215, 0, 0.15);
+    --shadow-ghost: 0 1px 0 rgba(255,255,255,0.9), 0 18px 40px -24px rgba(15,23,42,0.4);
+    --shadow-glow-cyan: 0 12px 36px rgba(56, 189, 248, 0.28);
+    --shadow-glow-gold: 0 12px 36px rgba(251, 191, 36, 0.24);
 
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 200 10% 96%;
-    --sidebar-primary: 187 100% 48%;
-    --sidebar-primary-foreground: 0 0% 2%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 200 10% 96%;
-    --sidebar-border: 0 0% 100% / 0.08;
-    --sidebar-ring: 187 100% 48%;
+    --sidebar-background: 210 50% 98%;
+    --sidebar-foreground: 221 39% 13%;
+    --sidebar-primary: 193 86% 42%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 214 35% 92%;
+    --sidebar-accent-foreground: 221 39% 13%;
+    --sidebar-border: 215 32% 82%;
+    --sidebar-ring: 193 86% 42%;
   }
 }
 
@@ -83,12 +83,12 @@
 
 @layer components {
   .glass-surface {
-    @apply bg-card/40 backdrop-blur-2xl border border-border rounded-2xl;
+    @apply bg-card/80 backdrop-blur-2xl border border-border rounded-2xl;
     box-shadow: var(--shadow-ghost);
   }
 
   .glass-surface-strong {
-    @apply bg-card/60 backdrop-blur-3xl border border-border rounded-2xl;
+    @apply bg-card/90 backdrop-blur-3xl border border-border rounded-2xl;
     box-shadow: var(--shadow-ghost);
   }
 
@@ -101,11 +101,11 @@
   }
 
   .text-gradient-cyan {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-cyan-300;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-sky-400 to-indigo-400;
   }
 
   .text-gradient-gold {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-secondary to-yellow-300;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-secondary via-amber-400 to-orange-300;
   }
 
   .border-glow {
@@ -160,4 +160,16 @@
   border-radius: 50%;
   opacity: 0.5;
   animation: twinkle var(--duration, 3s) infinite ease-in-out;
+}
+
+
+.leaflet-popup-content-wrapper {
+  background: linear-gradient(145deg, #f9fafc, #eef3fb);
+  color: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  box-shadow: 0 10px 30px rgba(15,23,42,0.14);
+}
+
+.leaflet-popup-tip {
+  background: #eef3fb;
 }
