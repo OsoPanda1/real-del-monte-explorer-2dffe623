@@ -9,6 +9,8 @@ import { performance } from "perf_hooks";
 import crypto from "crypto";
 import { db } from "../lib/store.js";
 import { handleRealitoChat } from "../experience/realitoController.js";
+import { config } from "../config.js";
+import { createRateLimiter } from "../middleware/rateLimit.js";
 
 // ============================================================================
 // Esquema de validación de entrada
@@ -39,6 +41,8 @@ const realitoChatSchema = z.object({
 // ============================================================================
 
 const realitoRouter = Router();
+
+realitoRouter.use(createRateLimiter(config.rateLimitMaxRequests, config.rateLimitWindowMs));
 
 realitoRouter.post("/chat", async (req, res) => {
   const startedAt = performance.now();

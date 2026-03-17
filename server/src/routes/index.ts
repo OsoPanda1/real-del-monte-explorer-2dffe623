@@ -19,8 +19,8 @@ import usersRouter from "./users.js";
 import placesRouter from "./places.js";
 import merchantsRouter from "./merchants.js";
 import twinsRouter from "./twins.js";
-import realitoRouter from "./realito.js";
 import experienceRouter from "./experience.js";
+import systemRouter from "./system.js";
 
 const apiRouter = Router();
 
@@ -44,7 +44,7 @@ apiRouter.use("/audit", auditRouter);
 apiRouter.use("/places", placesRouter);
 apiRouter.use("/merchants", merchantsRouter);
 apiRouter.use("/twins", twinsRouter);
-apiRouter.use("/realito", realitoRouter);
 apiRouter.use("/experience", experienceRouter);
+apiRouter.use("/", systemRouter);
 
 export default apiRouter;
