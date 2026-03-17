@@ -78,5 +78,10 @@ realitoRouter.post("/chat", (req, res) => {
     },
   });
 });
+import { handleRealitoChat } from "../experience/realitoController.js";
+
+const realitoRouter = Router();
+
+realitoRouter.post("/chat", handleRealitoChat);
 
 export default realitoRouter;

@@ -28,6 +28,7 @@ export function recommendBusinesses({ intent }: RecommendationInput) {
       const twin = ensureBusinessTwin(business);
       const twinOperationalScore = computeTwinOperationalScore(twin);
       const score = (relevance * RELEVANCE_WEIGHT) + (planWeight[business.plan] ?? 1) + twinOperationalScore;
+      const score = relevance * 10 + (planWeight[business.plan] ?? 1) + twinOperationalScore;
       return { ...business, score, twinOperationalScore, twinId: twin.id };
     })
     .sort((a, b) => b.score - a.score)

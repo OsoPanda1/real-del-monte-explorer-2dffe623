@@ -7,6 +7,131 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// =====================
+// GEMELOS DIGITALES
+// =====================
+
+model DigitalTwin {
+  id          String     @id @default(cuid())
+  modelType   TwinType
+  modelId     String?
+  sourceId    String
+  status      TwinStatus @default(ACTIVE)
+
+  telemetry   Json       @default("{}")
+  properties  Json       @default("{}")
+  metadata    Json       @default("{}")
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([sourceId, modelType])
+  @@index([modelType, status])
+}
+
+enum TwinType {
+  PLACE_TWIN
+  MERCHANT_TWIN
+  ROUTE_TWIN
+  AGENT_TWIN
+}
+
+enum TwinStatus {
+  ACTIVE
+  INACTIVE
+  SIMULATING
+  MAINTENANCE
+}
+
+// =====================
+// ENTIDADES TURÍSTICAS
+// =====================
+
+model Place {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String    @db.Text
+  type        String
+  location    Json
+  data        Json      @default("{}")
+  isFeatured  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Merchant {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  category        String
+  immersionLevel  Int      @default(1)
+  description     String   @db.Text
+  priceRange      String
+  address         String
+  location        Json?
+  phone           String?
+  website         String?
+  mainImage       String?
+  tags            String[]
+  pciCompliance   Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Route {
+  id           String      @id @default(cuid())
+  slug         String      @unique
+  name         String
+  theme        String
+  difficulty   String      @default("EASY")
+  fitnessScore Float       @default(0.0)
+  stops        RouteStop[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model RouteStop {
+  id      String @id @default(cuid())
+  order   Int
+  placeId String
+  routeId String
+
+  route   Route  @relation(fields: [routeId], references: [id])
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String   @db.Text
+  startDate   DateTime
+  endDate     DateTime
+  location    String
+  image       String?
+}
+
+model Legend {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  summary     String
+  content     String   @db.Text
+  tags        String[]
+}
+
+model Saying {
+  id          String   @id @default(cuid())
+  phrase      String
+  meaning     String   @db.Text
+  origin      String?
+}
+
+// =====================
+// USUARIOS Y COMERCIO
+// =====================
+
 enum Role {
   VISITOR
   MERCHANT
@@ -20,51 +145,8 @@ model User {
   role         Role          @default(VISITOR)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  businesses   Business[]
   donations    Donation[]
   interactions Interaction[]
-}
-
-model Business {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  category    String
-  plan        String   @default("basic")
-  latitude    Float
-  longitude   Float
-  address     String?
-  isActive    Boolean  @default(true)
-  ownerId     String
-  owner       User     @relation(fields: [ownerId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Event {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  startsAt    DateTime
-  endsAt      DateTime?
-  location    String?
-  latitude    Float?
-  longitude   Float?
-}
-
-model Route {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-}
-
-model Destination {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  latitude    Float
-  longitude   Float
-  kind        String
 }
 
 model Donation {

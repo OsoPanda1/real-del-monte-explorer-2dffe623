@@ -1,16 +1,13 @@
-import NavBar from "@/components/NavBar";
+import MainLayout from "@/components/layout/MainLayout";
 import HeroSection from "@/components/HeroSection";
 import SitesSection from "@/components/SitesSection";
 import QuickLinksSection from "@/components/QuickLinksSection";
 import MapSection from "@/components/MapSection";
 import MerchantCatalog from "@/components/MerchantCatalog";
-import FooterSection from "@/components/FooterSection";
-import RealitoOrb from "@/components/RealitoOrb";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <NavBar />
+    <MainLayout>
       <HeroSection />
       <SitesSection />
       <QuickLinksSection />
@@ -18,9 +15,7 @@ const Index = () => {
         <MapSection />
       </div>
       <MerchantCatalog />
-      <FooterSection />
-      <RealitoOrb />
-    </div>
+    </MainLayout>
   );
 };
 
