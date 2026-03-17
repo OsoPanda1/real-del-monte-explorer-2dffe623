@@ -4,10 +4,13 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { config } from "../config.js";
 import { db } from "../lib/store.js";
+import { ensureProfile } from "../services/user.service.js";
+import { ensureMembership, ensureTokenBalance } from "../services/economy.service.js";
 
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+  role: z.enum(["VISITOR", "MERCHANT"]).optional(),
 });
 
 const loginSchema = registerSchema;
@@ -20,7 +23,7 @@ authRouter.post("/register", async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
 
-  const { email, password } = parsed.data;
+  const { email, password, role } = parsed.data;
   if (db.usersByEmail.has(email)) {
     return res.status(409).json({ error: "Email already exists" });
   }
@@ -28,11 +31,16 @@ authRouter.post("/register", async (req, res) => {
   const id = crypto.randomUUID();
   const passwordHash = await bcrypt.hash(password, 10);
 
-  db.users.set(id, { id, email, passwordHash, role: "MERCHANT" });
+  const normalizedRole = role ?? "VISITOR";
+  db.users.set(id, { id, email, passwordHash, role: normalizedRole });
   db.usersByEmail.set(email, id);
 
-  const token = jwt.sign({ sub: id, role: "MERCHANT" }, config.jwtSecret, { expiresIn: "7d" });
-  return res.status(201).json({ token, user: { id, email, role: "MERCHANT" } });
+  ensureProfile(id);
+  ensureMembership(id);
+  ensureTokenBalance(id);
+
+  const token = jwt.sign({ sub: id, role: normalizedRole }, config.jwtSecret, { expiresIn: "7d" });
+  return res.status(201).json({ token, user: { id, email, role: normalizedRole } });
 });
 
 authRouter.post("/login", async (req, res) => {
@@ -41,7 +49,7 @@ authRouter.post("/login", async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
 
-  const { email, password } = parsed.data;
+  const { email, password, role } = parsed.data;
   const userId = db.usersByEmail.get(email);
 
   if (!userId) {
@@ -60,6 +68,10 @@ authRouter.post("/login", async (req, res) => {
 
   const token = jwt.sign({ sub: user.id, role: user.role }, config.jwtSecret, { expiresIn: "7d" });
   return res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
+});
+
+authRouter.post("/logout", (_req, res) => {
+  return res.json({ ok: true, message: "Logout controlado por cliente (JWT stateless)." });
 });
 
 export default authRouter;

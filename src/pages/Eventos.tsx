@@ -2,13 +2,16 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import PageHero from "@/components/PageHero";
 import heroImg from "@/assets/eventos-hero.jpg";
-import { events } from "@/data/rdm-data";
+import { events as localEvents } from "@/data/rdm-data";
+import { useEventsApi } from "@/hooks/useTourismContent";
 import NavBar from "@/components/NavBar";
 import FooterSection from "@/components/FooterSection";
 import RealitoOrb from "@/components/RealitoOrb";
 
 const Eventos = () => {
   const [showAll, setShowAll] = useState(false);
+  const { data: apiEvents } = useEventsApi();
+  const events = apiEvents.length ? apiEvents : localEvents;
   const displayed = showAll ? events : events.slice(0, 6);
 
   return (
