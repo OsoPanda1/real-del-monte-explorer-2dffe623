@@ -66,3 +66,11 @@ Fuentes consolidadas:
 - Migrar `RealitoOrb` al contrato `/api/realito/chat` con historial y trace.
 - Publicar este backlog como fuente de ejecución y control de avance.
 
+
+## Roadmap ejecutable (nuevo)
+
+Se añadió una versión estructurada del plan en YAML para importación y seguimiento operativo:
+
+- `docs/roadmap-rdmx-executable.yaml`
+
+Incluye áreas, prioridades, estimaciones, tareas por ID y criterios de aceptación.

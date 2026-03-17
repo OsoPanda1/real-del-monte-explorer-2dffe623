@@ -1,0 +1,308 @@
+version: 1
+program: RDMX-Operationalization
+objective: >-
+  Convert the current RDM·X prototype into a production-ready platform with
+  persistent data, secure APIs, external AI integration, observability, and
+  continuous operations.
+phases:
+  - id: P0
+    name: Foundation & Hardening
+    weeks: 1-3
+  - id: P1
+    name: Core Productization
+    weeks: 4-8
+  - id: P2
+    name: Revenue & Scale
+    weeks: 9-12
+areas:
+  - key: data
+    title: Base de datos y modelo de gemelos
+    priority: P0
+    estimate: 10d
+    outcomes:
+      - Prisma conectado a PostgreSQL gestionado en dev/staging/prod
+      - Migraciones versionadas para entidades de dominio
+      - Datos semilla cargados desde arrays históricos
+      - Servicios usando Prisma en lugar de memoria
+    tasks:
+      - id: DATA-01
+        title: Configurar DATABASE_URL y SHADOW_DATABASE_URL por entorno
+        estimate: 0.5d
+        owner: backend
+        status: todo
+        acceptance:
+          - Variables documentadas en .env.example y secretos CI/CD
+          - Conexión validada en dev/staging/prod
+      - id: DATA-02
+        title: Completar schema Prisma y migraciones de dominio
+        estimate: 3d
+        owner: backend
+        status: todo
+        entities:
+          - DigitalTwin
+          - Place
+          - Merchant
+          - Route
+          - RouteStop
+          - Event
+          - Legend
+          - Saying
+          - User
+          - Interaction
+        acceptance:
+          - prisma migrate dev y prisma migrate deploy exitosos
+          - Historial de migraciones en control de versiones
+      - id: DATA-03
+        title: Scripts de seeding desde arrays actuales
+        estimate: 2d
+        owner: backend
+        status: todo
+        sources:
+          - places
+          - businesses
+          - events
+          - routes
+          - dichos
+          - relatos
+          - communityPosts
+          - timelineHistory
+        acceptance:
+          - Seed idempotente
+          - Relación de registros con DigitalTwin validada
+      - id: DATA-04
+        title: Reemplazar consumo en memoria por Prisma en servicios
+        estimate: 4.5d
+        owner: backend
+        status: todo
+        acceptance:
+          - Filtros, paginación y ordenamiento implementados
+          - Eliminadas rutas críticas con arrays en memoria
+
+  - key: api-domain
+    title: Capa de APIs REST / dominio
+    priority: P0
+    estimate: 8d
+    tasks:
+      - id: API-01
+        title: Completar endpoints GET de places/merchants/routes/events/legends/sayings/community
+        estimate: 3d
+        owner: backend
+        status: todo
+      - id: API-02
+        title: Validación Zod en POST/PUT/PATCH + respuestas tipadas
+        estimate: 2.5d
+        owner: backend
+        status: todo
+      - id: API-03
+        title: Esquema uniforme de errores HTTP
+        estimate: 2.5d
+        owner: backend
+        status: todo
+        error_payload:
+          - code
+          - message
+          - details
+
+  - key: ai-experience
+    title: Realito AI y motor de experiencia
+    priority: P1
+    estimate: 9d
+    tasks:
+      - id: AI-01
+        title: Integrar handleRealitoChat + GA como ruta principal con fallback heurístico
+        estimate: 2d
+        owner: backend
+        status: todo
+      - id: AI-02
+        title: Integrar gateway IA externo (/ai/realito)
+        estimate: 2.5d
+        owner: backend
+        status: todo
+        env:
+          - REALITO_AI_URL
+          - REALITO_AI_API_KEY
+      - id: AI-03
+        title: Timeouts, reintentos y degradación controlada
+        estimate: 1.5d
+        owner: backend
+        status: todo
+      - id: AI-04
+        title: Endpoint POST /api/experience/plan con optimizeRoute
+        estimate: 3d
+        owner: backend
+        status: todo
+
+  - key: auth-roles
+    title: Autenticación, roles y comercios
+    priority: P1
+    estimate: 7d
+    tasks:
+      - id: AUTH-01
+        title: Modelos User/Role/MerchantUser/sesión en Prisma
+        estimate: 2d
+        owner: backend
+        status: todo
+      - id: AUTH-02
+        title: Integración de proveedor de identidad o JWT propio
+        estimate: 3d
+        owner: backend
+        status: todo
+      - id: AUTH-03
+        title: Middleware de autorización por rol en rutas mutantes
+        estimate: 2d
+        owner: backend
+        status: todo
+        roles:
+          - visitor
+          - merchant
+          - admin
+
+  - key: billing
+    title: Billing y planes L1-L3
+    priority: P2
+    estimate: 6d
+    tasks:
+      - id: BILL-01
+        title: Crear planes L1-L3 en Stripe
+        estimate: 1d
+        owner: backend
+        status: todo
+      - id: BILL-02
+        title: Endpoint checkout-session vinculado a Merchant
+        estimate: 2d
+        owner: backend
+        status: todo
+      - id: BILL-03
+        title: Webhook de suscripciones + actualización de estado
+        estimate: 2d
+        owner: backend
+        status: todo
+      - id: BILL-04
+        title: Conectar UI panel de comercios a estados de plan
+        estimate: 1d
+        owner: frontend
+        status: todo
+
+  - key: frontend
+    title: Frontend productivo
+    priority: P1
+    estimate: 7d
+    tasks:
+      - id: FE-01
+        title: Sustituir datos estáticos residuales por APIs reales
+        estimate: 3d
+        owner: frontend
+        status: todo
+      - id: FE-02
+        title: Loading states y skeletons consistentes
+        estimate: 1.5d
+        owner: frontend
+        status: todo
+      - id: FE-03
+        title: Manejo centralizado de errores de red
+        estimate: 1.5d
+        owner: frontend
+        status: todo
+      - id: FE-04
+        title: Cierre de navegación lazy y chunks dinámicos
+        estimate: 1d
+        owner: frontend
+        status: todo
+
+  - key: observability
+    title: Observabilidad, logging y salud
+    priority: P0
+    estimate: 5d
+    tasks:
+      - id: OBS-01
+        title: Logging estructurado con requestId/userId/intent/routeId/aiLatencyMs
+        estimate: 2d
+        owner: backend
+        status: todo
+      - id: OBS-02
+        title: Métricas por endpoint y uso de IA/GA
+        estimate: 2d
+        owner: backend
+        status: todo
+      - id: OBS-03
+        title: Endpoints /api/health ampliado y /api/ready
+        estimate: 1d
+        owner: backend
+        status: todo
+
+  - key: security
+    title: Seguridad y hardening
+    priority: P0
+    estimate: 5d
+    tasks:
+      - id: SEC-01
+        title: CORS estricto por dominios finales
+        estimate: 0.5d
+        owner: backend
+        status: todo
+      - id: SEC-02
+        title: Rate limiting en /api/realito/chat y /api/experience/plan
+        estimate: 1d
+        owner: backend
+        status: todo
+      - id: SEC-03
+        title: Sanitización de inputs de texto libre
+        estimate: 1.5d
+        owner: backend
+        status: todo
+      - id: SEC-04
+        title: Headers de seguridad frontend/backend
+        estimate: 2d
+        owner: fullstack
+        status: todo
+
+  - key: cicd
+    title: CI/CD, entornos y despliegue
+    priority: P1
+    estimate: 6d
+    tasks:
+      - id: CICD-01
+        title: Pipeline con lint + tests + builds en push a main
+        estimate: 2.5d
+        owner: platform
+        status: todo
+      - id: CICD-02
+        title: prisma migrate deploy en staging
+        estimate: 1d
+        owner: platform
+        status: todo
+      - id: CICD-03
+        title: Separación dev/staging/prod y recursos base
+        estimate: 2.5d
+        owner: platform
+        status: todo
+
+  - key: telemetry
+    title: Telemetría de experiencia y gemelos
+    priority: P2
+    estimate: 6d
+    tasks:
+      - id: TEL-01
+        title: Modelo Interaction/ExperienceSession conectado a User/PlannedRoute/DigitalTwin
+        estimate: 2d
+        owner: backend
+        status: todo
+      - id: TEL-02
+        title: Registro de eventos clave de uso de rutas y paradas
+        estimate: 2d
+        owner: backend
+        status: todo
+      - id: TEL-03
+        title: Jobs batch para popularityScore/immersionLevel/flowIndex
+        estimate: 2d
+        owner: backend
+        status: todo
+
+cross_repo_unification:
+  objective: Unificar activos funcionales de múltiples repositorios en tamv-digital-nexus
+  suggested_steps:
+    - Inventario por repo: dominio, stack, mantenedor, estado operativo
+    - Matriz de decisión: migrar, encapsular o archivar
+    - Definir arquitectura modular en monorepo (apps, packages, services)
+    - Migración por olas con pruebas de regresión y contratos API
+    - Consolidar CI/CD, secretos y observabilidad centralizada
