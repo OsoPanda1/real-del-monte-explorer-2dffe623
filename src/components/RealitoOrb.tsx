@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
-import { useRealitoChat } from "@/hooks/useRealitoChat";
+import { useNavigate } from "react-router-dom";
+import { useRealitoChat, type SuggestedAction } from "@/hooks/useRealitoChat";
+import ReactMarkdown from "react-markdown";
 
 const orbVariants = {
   idle: {
@@ -13,18 +15,24 @@ const orbVariants = {
   },
 };
 
-const quickActions = [
-  { label: "🗺️ Ruta recomendada", message: "Recomiéndame la mejor ruta para hoy" },
-  { label: "🥟 Gastronomía", message: "¿Dónde puedo comer pastes tradicionales?" },
-  { label: "⛏️ Historia", message: "Cuéntame la historia de las minas" },
-  { label: "🌲 Aventura", message: "¿Qué actividades de aventura hay?" },
-];
+const actionToMessage: Record<string, string> = {
+  SUGGEST_ROUTE: "Recomiéndame la mejor ruta para hoy",
+  FIND_FOOD: "¿Dónde puedo comer pastes tradicionales?",
+  TELL_HISTORY: "Cuéntame la historia de las minas",
+  FIND_ADVENTURE: "¿Qué actividades de aventura hay?",
+  REQUEST_FOOD_ROUTE: "Diseña una ruta gastronómica completa",
+  REQUEST_HERITAGE_ROUTE: "Quiero hacer la ruta del patrimonio minero",
+  REQUEST_ADVENTURE_ROUTE: "Planea una ruta de aventura por la montaña",
+  REQUEST_SHORTER_ROUTE: "Quiero una ruta más corta, de 1 hora máximo",
+  REQUEST_EVENT_ROUTE: "¿Qué eventos hay próximamente?",
+};
 
 const RealitoOrb = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const { messages, isLoading, send } = useRealitoChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,6 +44,31 @@ const RealitoOrb = () => {
     setInput("");
     await send(payload);
   };
+
+  const handleAction = (action: SuggestedAction) => {
+    // Navigation actions
+    if (action.action === "NAVIGATE" && action.payload?.path) {
+      navigate(action.payload.path as string);
+      return;
+    }
+    if (action.action === "OPEN_CATALOG") {
+      navigate("/catalogo");
+      return;
+    }
+
+    // Translate action to message for Realito
+    const msg = actionToMessage[action.action];
+    if (msg) {
+      void handleSend(msg);
+      return;
+    }
+
+    // Default: send the label as message
+    void handleSend(action.label.replace(/^[^\s]+\s/, ""));
+  };
+
+  const lastMessage = messages[messages.length - 1];
+  const showSuggestedActions = lastMessage?.role === "assistant" && lastMessage.suggestedActions?.length;
 
   return (
     <>
@@ -63,7 +96,7 @@ const RealitoOrb = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-            className="fixed bottom-24 right-8 z-50 w-[380px] max-h-[520px] glass-surface-strong flex flex-col overflow-hidden"
+            className="fixed bottom-24 right-4 sm:right-8 z-50 w-[calc(100vw-2rem)] sm:w-[400px] max-h-[560px] glass-surface-strong flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="p-4 border-b border-border">
@@ -74,7 +107,7 @@ const RealitoOrb = () => {
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold">Realito AI</h4>
                   <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-                    Núcleo RDM·X Digital Core · v3
+                    Gemelo Digital Territorial · v3
                   </span>
                 </div>
                 <button
@@ -88,7 +121,7 @@ const RealitoOrb = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[300px]">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[320px]">
               {messages.map((msg) => (
                 <motion.div
                   key={msg.id}
@@ -98,10 +131,16 @@ const RealitoOrb = () => {
                   className={`text-sm leading-relaxed ${
                     msg.role === "user"
                       ? "bg-primary/10 text-foreground p-3 rounded-2xl rounded-br-sm ml-10"
-                      : "bg-card/80 text-foreground p-3 rounded-2xl rounded-bl-sm mr-6 border border-border"
+                      : "bg-card/80 text-foreground p-3 rounded-2xl rounded-bl-sm mr-4 border border-border"
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === "assistant" ? (
+                    <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>p]:mb-2 [&>ul]:m-0 [&>ul]:mb-2 [&_strong]:text-primary">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    msg.content
+                  )}
                 </motion.div>
               ))}
               {isLoading && (
@@ -117,13 +156,13 @@ const RealitoOrb = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Quick actions */}
-            {messages.length <= 2 && (
+            {/* Suggested Actions */}
+            {showSuggestedActions && !isLoading && (
               <div className="px-4 pb-2 flex flex-wrap gap-1.5">
-                {quickActions.map((action) => (
+                {lastMessage.suggestedActions!.map((action) => (
                   <button
                     key={action.label}
-                    onClick={() => void handleSend(action.message)}
+                    onClick={() => handleAction(action)}
                     className="text-[10px] px-2.5 py-1.5 rounded-full bg-primary/10 text-foreground border border-border hover:bg-primary/20 transition-colors"
                   >
                     {action.label}
@@ -134,24 +173,29 @@ const RealitoOrb = () => {
 
             {/* Input */}
             <div className="p-3 border-t border-border">
-              <div className="flex gap-2">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void handleSend();
+                }}
+                className="flex gap-2"
+              >
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && void handleSend()}
                   placeholder="Pregúntale a Realito..."
                   className="flex-1 bg-muted/50 text-sm px-4 py-2.5 rounded-xl border border-border outline-none text-foreground placeholder:text-muted-foreground focus:border-primary/50 transition-colors"
                 />
                 <motion.button
+                  type="submit"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => void handleSend()}
                   disabled={isLoading}
                   className="px-4 py-2.5 bg-primary text-primary-foreground text-xs font-bold rounded-xl disabled:opacity-50 transition-opacity"
                 >
                   →
                 </motion.button>
-              </div>
+              </form>
             </div>
           </motion.div>
         )}

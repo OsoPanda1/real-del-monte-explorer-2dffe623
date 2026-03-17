@@ -4,30 +4,41 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useApi } from "@/hooks/useApi";
 
-interface PlaceData {
+interface TwinNode {
   id: string;
-  slug: string;
+  modelType: string;
+  sourceId: string;
   name: string;
-  description: string;
-  type: string;
-  location: { lat: number; lng: number; alt?: number };
-  isFeatured: boolean;
+  lat: number;
+  lng: number;
+  tags: string[];
+  immersionLevel: number;
+  popularityScore: number;
+  telemetry: {
+    crowdLevel?: number;
+    weather?: string;
+    openStatus?: boolean;
+    flowIndex?: number;
+    avgStayMinutes?: number;
+    queueMinutes?: number;
+  };
+  properties: {
+    type?: string;
+    immersion?: string;
+    narrative?: string;
+  };
 }
 
-interface MerchantData {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  location: { lat: number; lng: number } | null;
-  isActive: boolean;
+interface TwinsResponse {
+  count: number;
+  twins: TwinNode[];
 }
 
 const typeColors: Record<string, string> = {
   HISTORIC: "#00f3ff",
   MUSEUM: "#ffd700",
   MINE: "#ffd700",
-  RELIGIOUS: "#ffd700",
+  RELIGIOUS: "#c084fc",
   VIEWPOINT: "#00ff88",
   NATURE: "#00ff88",
   FOOD: "#ff8c00",
@@ -53,40 +64,53 @@ const typeLabels: Record<string, string> = {
   CULTURE: "Cultura",
 };
 
-// Fallback data when API is unavailable
-const fallbackPlaces: PlaceData[] = [
-  { id: "centro-historico", slug: "centro-historico", name: "Centro Histórico y Plaza Principal", description: "Corazón de Real del Monte, con arquitectura de influencia inglesa y memoria minera viva.", type: "HISTORIC", location: { lat: 20.1407, lng: -98.6725, alt: 2700 }, isFeatured: true },
-  { id: "mina-de-acosta", slug: "mina-de-acosta", name: "Mina de Acosta", description: "Mina histórica convertida en museo. Desciende 400m bajo tierra.", type: "MUSEUM", location: { lat: 20.1448, lng: -98.6653, alt: 2720 }, isFeatured: true },
-  { id: "panteon-ingles", slug: "panteon-ingles", name: "Panteón Inglés", description: "Único cementerio inglés en Latinoamérica con criptas victorianas.", type: "HISTORIC", location: { lat: 20.1397, lng: -98.6769, alt: 2690 }, isFeatured: true },
-  { id: "parroquia-asuncion", slug: "parroquia-asuncion", name: "Parroquia de la Asunción", description: "Iglesia colonial del siglo XVIII con retablos barrocos dorados.", type: "RELIGIOUS", location: { lat: 20.1412, lng: -98.6738, alt: 2700 }, isFeatured: false },
-  { id: "museo-medicina", slug: "museo-medicina", name: "Museo de Medicina Laboral", description: "Documenta las condiciones de salud de los mineros.", type: "MUSEUM", location: { lat: 20.1405, lng: -98.6729, alt: 2700 }, isFeatured: false },
-  { id: "cristo-rey", slug: "cristo-rey", name: "Cristo Rey (Peña del Zumate)", description: "Vistas panorámicas de 360° del pueblo.", type: "VIEWPOINT", location: { lat: 20.1460, lng: -98.6690, alt: 2780 }, isFeatured: true },
-  { id: "mina-dolores", slug: "mina-dolores", name: "Mina de Dolores", description: "Una de las minas más profundas de la región.", type: "MINE", location: { lat: 20.1430, lng: -98.6700, alt: 2730 }, isFeatured: false },
-  { id: "bosque-pinos", slug: "bosque-pinos", name: "Bosque de Pinos y Oyameles", description: "Senderismo a 2,700m de altitud.", type: "NATURE", location: { lat: 20.1556, lng: -98.6856, alt: 2750 }, isFeatured: false },
-  { id: "mirador-atardecer", slug: "mirador-atardecer", name: "Mirador del Atardecer", description: "Mejor lugar para ver el atardecer.", type: "VIEWPOINT", location: { lat: 20.1489, lng: -98.6711, alt: 2760 }, isFeatured: false },
-];
+function crowdBadge(level: number): string {
+  if (level > 0.7) return '<span style="color:#ff4444;font-size:10px;">● Alta ocupación</span>';
+  if (level > 0.4) return '<span style="color:#ffaa00;font-size:10px;">● Moderado</span>';
+  return '<span style="color:#00ff88;font-size:10px;">● Tranquilo</span>';
+}
 
-const fallbackMerchants: MerchantData[] = [
-  { id: "pasteria-portal", name: "Pastería El Portal", category: "FOOD", description: "Pastes tradicionales con receta córnica.", location: { lat: 20.1409, lng: -98.6723 }, isActive: true },
-  { id: "mina-coffee", name: "Mina Coffee House", category: "FOOD", description: "Café artesanal en ambiente colonial.", location: { lat: 20.1391, lng: -98.6752 }, isActive: true },
-  { id: "hotel-real", name: "Hotel Real del Monte", category: "LODGING", description: "Hotel boutique con vista panorámica.", location: { lat: 20.1456, lng: -98.6800 }, isActive: true },
-  { id: "eco-aventuras", name: "Eco Aventuras RDM", category: "ACTIVITY", description: "Tours de ecoturismo y rappelling.", location: { lat: 20.1500, lng: -98.6820 }, isActive: true },
-  { id: "bar-portal", name: "Bar El Portal", category: "BAR", description: "Bar con música en vivo.", location: { lat: 20.1382, lng: -98.6753 }, isActive: true },
+function immersionBadge(level: string): string {
+  const colors: Record<string, string> = { L1: "#888", L2: "#00f3ff", L3: "#ffd700" };
+  return `<span style="color:${colors[level] ?? "#888"};font-size:10px;font-family:'IBM Plex Mono',monospace;">Inmersión ${level}</span>`;
+}
+
+// Fallback twins when API is unavailable
+const fallbackTwins: TwinNode[] = [
+  { id: "twin-centro", modelType: "PLACE_TWIN", sourceId: "centro-historico", name: "Centro Histórico", lat: 20.1407, lng: -98.6725, tags: ["HISTORIA"], immersionLevel: 0.7, popularityScore: 0.9, telemetry: { crowdLevel: 0.45, openStatus: true }, properties: { type: "HISTORIC", immersion: "L2" } },
+  { id: "twin-mina", modelType: "PLACE_TWIN", sourceId: "mina-acosta", name: "Mina de Acosta", lat: 20.1448, lng: -98.6653, tags: ["MUSEO"], immersionLevel: 0.9, popularityScore: 0.95, telemetry: { crowdLevel: 0.3, openStatus: true }, properties: { type: "MUSEUM", immersion: "L3" } },
+  { id: "twin-panteon", modelType: "PLACE_TWIN", sourceId: "panteon-ingles", name: "Panteón Inglés", lat: 20.1397, lng: -98.6769, tags: ["HISTORIA"], immersionLevel: 0.8, popularityScore: 0.85, telemetry: { crowdLevel: 0.15, openStatus: true }, properties: { type: "HISTORIC", immersion: "L2" } },
+  { id: "twin-cristo", modelType: "PLACE_TWIN", sourceId: "cristo-rey", name: "Cristo Rey", lat: 20.1460, lng: -98.6690, tags: ["MIRADOR"], immersionLevel: 0.7, popularityScore: 0.8, telemetry: { crowdLevel: 0.25, openStatus: true }, properties: { type: "VIEWPOINT", immersion: "L2" } },
+  { id: "twin-bosque", modelType: "PLACE_TWIN", sourceId: "bosque-pinos", name: "Bosque de Pinos", lat: 20.1556, lng: -98.6856, tags: ["NATURALEZA"], immersionLevel: 0.6, popularityScore: 0.65, telemetry: { crowdLevel: 0.08, openStatus: true }, properties: { type: "NATURE", immersion: "L1" } },
+  { id: "twin-paste", modelType: "MERCHANT_TWIN", sourceId: "pasteria-portal", name: "Pastería El Portal", lat: 20.1409, lng: -98.6723, tags: ["GASTRONOMIA"], immersionLevel: 0.7, popularityScore: 0.9, telemetry: { crowdLevel: 0.6, openStatus: true }, properties: { type: "FOOD", immersion: "L2" } },
+  { id: "twin-coffee", modelType: "MERCHANT_TWIN", sourceId: "mina-coffee", name: "Mina Coffee House", lat: 20.1391, lng: -98.6752, tags: ["CAFE"], immersionLevel: 0.6, popularityScore: 0.7, telemetry: { crowdLevel: 0.4, openStatus: true }, properties: { type: "FOOD", immersion: "L2" } },
+  { id: "twin-hotel", modelType: "MERCHANT_TWIN", sourceId: "hotel-real", name: "Hotel Real del Monte", lat: 20.1456, lng: -98.6800, tags: ["HOSPEDAJE"], immersionLevel: 0.8, popularityScore: 0.75, telemetry: { crowdLevel: 0.3, openStatus: true }, properties: { type: "LODGING", immersion: "L3" } },
+  { id: "twin-eco", modelType: "MERCHANT_TWIN", sourceId: "eco-aventuras", name: "Eco Aventuras RDM", lat: 20.1500, lng: -98.6820, tags: ["AVENTURA"], immersionLevel: 0.9, popularityScore: 0.7, telemetry: { crowdLevel: 0.15, openStatus: true }, properties: { type: "ACTIVITY", immersion: "L3" } },
 ];
 
 const MapSection = () => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [mapReady, setMapReady] = useState(false);
+  const mapInstanceRef = useRef<L.Map | null>(null);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
-  const { data: apiPlaces } = useApi<PlaceData[]>("/api/places");
-  const { data: apiMerchants } = useApi<MerchantData[]>("/api/merchants");
+  const { data: twinsResponse } = useApi<TwinsResponse>("/api/experience/twins");
+  const twins = twinsResponse?.twins ?? fallbackTwins;
 
-  const places = apiPlaces ?? fallbackPlaces;
-  const merchants = apiMerchants ?? fallbackMerchants;
+  // Stats from telemetry
+  const avgCrowd = twins.length > 0
+    ? Math.round((twins.reduce((a, t) => a + (t.telemetry.crowdLevel ?? 0), 0) / twins.length) * 100)
+    : 0;
+  const placesCount = twins.filter((t) => t.modelType === "PLACE_TWIN").length;
+  const merchantsCount = twins.filter((t) => t.modelType === "MERCHANT_TWIN").length;
 
   useEffect(() => {
     if (!mapRef.current) return;
+
+    // Cleanup previous map
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+    }
 
     const map = L.map(mapRef.current, {
       center: [20.1410, -98.6735],
@@ -95,18 +119,28 @@ const MapSection = () => {
       attributionControl: false,
     });
 
+    mapInstanceRef.current = map;
+
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
       maxZoom: 19,
     }).addTo(map);
 
     L.control.zoom({ position: "bottomright" }).addTo(map);
 
-    // Add places
-    places.forEach((place) => {
-      if (activeFilter && place.type !== activeFilter) return;
-      const color = typeColors[place.type] ?? "#00f3ff";
-      const label = typeLabels[place.type] ?? place.type;
-      const size = place.isFeatured ? 16 : 12;
+    // Render twins as markers with telemetry data
+    twins.forEach((twin) => {
+      const type = (twin.properties.type ?? "").toUpperCase();
+      if (activeFilter && type !== activeFilter) return;
+
+      const color = typeColors[type] ?? "#00f3ff";
+      const label = typeLabels[type] ?? type;
+      const crowd = twin.telemetry.crowdLevel ?? 0;
+      const immersion = twin.properties.immersion ?? "L1";
+      const isPlace = twin.modelType === "PLACE_TWIN";
+      const size = twin.popularityScore > 0.7 ? 16 : isPlace ? 13 : 10;
+
+      // Crowd-aware opacity
+      const opacity = crowd > 0.7 ? 0.5 : 1;
 
       const icon = L.divIcon({
         className: "custom-marker",
@@ -114,70 +148,46 @@ const MapSection = () => {
           width: ${size}px; height: ${size}px; border-radius: 50%;
           background: ${color}; border: 2px solid rgba(0,0,0,0.5);
           box-shadow: 0 0 14px ${color}80;
+          opacity: ${opacity};
           animation: nodePulse 3s ease-in-out infinite;
         "></div>`,
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
       });
 
-      L.marker([place.location.lat, place.location.lng], { icon })
+      const popupContent = `
+        <div style="
+          background: #0d0d0d; color: #f0f0f0; padding: 16px 20px;
+          border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
+          font-family: 'Inter', sans-serif; min-width: 200px; max-width: 260px;
+        ">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:9px; text-transform:uppercase; letter-spacing:0.15em; color:${color}; font-family:'IBM Plex Mono',monospace;">
+              ${isPlace ? label : `Comercio · ${label}`}
+            </span>
+            ${immersionBadge(immersion)}
+          </div>
+          <div style="font-size:15px; font-weight:600; margin-bottom:8px;">${twin.name}</div>
+          ${twin.properties.narrative ? `<div style="font-size:12px; color:#999; line-height:1.4; margin-bottom:8px;">${(twin.properties.narrative as string).substring(0, 140)}…</div>` : ""}
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            ${crowdBadge(crowd)}
+            ${twin.telemetry.avgStayMinutes ? `<span style="font-size:10px;color:#666;font-family:'IBM Plex Mono',monospace;">~${twin.telemetry.avgStayMinutes} min</span>` : ""}
+          </div>
+          ${twin.telemetry.queueMinutes ? `<div style="font-size:10px;color:#888;margin-top:4px;">Espera: ~${twin.telemetry.queueMinutes} min</div>` : ""}
+        </div>`;
+
+      L.marker([twin.lat, twin.lng], { icon })
         .addTo(map)
-        .bindPopup(
-          `<div style="
-            background: #0d0d0d; color: #f0f0f0; padding: 14px 18px;
-            border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
-            font-family: 'Inter', sans-serif; min-width: 180px;
-          ">
-            <div style="font-size:9px; text-transform:uppercase; letter-spacing:0.15em; color:${color}; font-family:'IBM Plex Mono',monospace;">${label}</div>
-            <div style="font-size:15px; font-weight:600; margin-top:4px;">${place.name}</div>
-            <div style="font-size:12px; color:#999; margin-top:6px; line-height:1.4;">${place.description.substring(0, 120)}…</div>
-            ${place.location.alt ? `<div style="font-size:10px; color:#666; margin-top:6px; font-family:'IBM Plex Mono',monospace;">${place.location.alt}m s.n.m.</div>` : ""}
-          </div>`,
-          { className: "rdm-popup", closeButton: false }
-        );
+        .bindPopup(popupContent, { className: "rdm-popup", closeButton: false });
     });
-
-    // Add merchants
-    merchants.forEach((merchant) => {
-      if (!merchant.location || !merchant.isActive) return;
-      if (activeFilter && merchant.category !== activeFilter) return;
-      const color = typeColors[merchant.category] ?? "#ff8c00";
-      const label = typeLabels[merchant.category] ?? merchant.category;
-
-      const icon = L.divIcon({
-        className: "custom-marker",
-        html: `<div style="
-          width: 10px; height: 10px; border-radius: 50%;
-          background: ${color}; border: 1.5px solid rgba(0,0,0,0.4);
-          box-shadow: 0 0 10px ${color}60;
-          animation: nodePulse 4s ease-in-out infinite;
-        "></div>`,
-        iconSize: [10, 10],
-        iconAnchor: [5, 5],
-      });
-
-      L.marker([merchant.location.lat, merchant.location.lng], { icon })
-        .addTo(map)
-        .bindPopup(
-          `<div style="
-            background: #0d0d0d; color: #f0f0f0; padding: 14px 18px;
-            border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
-            font-family: 'Inter', sans-serif; min-width: 170px;
-          ">
-            <div style="font-size:9px; text-transform:uppercase; letter-spacing:0.15em; color:${color}; font-family:'IBM Plex Mono',monospace;">Comercio · ${label}</div>
-            <div style="font-size:15px; font-weight:600; margin-top:4px;">${merchant.name}</div>
-            <div style="font-size:12px; color:#999; margin-top:6px; line-height:1.4;">${merchant.description.substring(0, 100)}…</div>
-          </div>`,
-          { className: "rdm-popup", closeButton: false }
-        );
-    });
-
-    setMapReady(true);
 
     return () => {
-      map.remove();
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
     };
-  }, [places, merchants, activeFilter]);
+  }, [twins, activeFilter]);
 
   const filterOptions = [
     { key: null, label: "Todos" },
@@ -187,6 +197,7 @@ const MapSection = () => {
     { key: "NATURE", label: "Naturaleza" },
     { key: "FOOD", label: "Gastronomía" },
     { key: "LODGING", label: "Hospedaje" },
+    { key: "ACTIVITY", label: "Actividades" },
   ];
 
   return (
@@ -199,14 +210,14 @@ const MapSection = () => {
           className="mb-12"
         >
           <span className="font-mono text-xs uppercase tracking-widest text-primary mb-3 block">
-            Gemelo Digital · Capa de Datos
+            Gemelo Digital Territorial · Telemetría Viva
           </span>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tighter uppercase">
             Mapa <span className="text-gradient-cyan">en Tiempo Real</span>
           </h2>
           <p className="mt-4 text-muted-foreground max-w-lg">
-            Cada nodo representa un punto de interés activo con telemetría del gemelo digital.
-            Los comercios verificados brillan con más intensidad.
+            Cada nodo representa un punto activo del gemelo digital con telemetría de aforo,
+            nivel de inmersión y estado operativo. Los nodos más brillantes tienen menor saturación.
           </p>
         </motion.div>
 
@@ -235,9 +246,6 @@ const MapSection = () => {
           className="glass-surface overflow-hidden glow-cyan"
         >
           <div ref={mapRef} className="w-full h-[500px] md:h-[600px]" />
-          {!mapReady && (
-            <div className="absolute inset-0 shimmer-terrain" />
-          )}
         </motion.div>
 
         {/* Legend */}
@@ -260,7 +268,7 @@ const MapSection = () => {
           ))}
         </div>
 
-        {/* Live stats */}
+        {/* Live telemetry stats */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -268,14 +276,17 @@ const MapSection = () => {
           className="mt-8 flex flex-wrap gap-8 font-mono text-xs uppercase tracking-widest text-muted-foreground"
         >
           <span>
-            Nodos:{" "}
-            <span className="text-primary">{places.length + merchants.length}</span>
+            Nodos Activos:{" "}
+            <span className="text-primary">{twins.length}</span>
           </span>
           <span>
-            Lugares: <span className="text-foreground">{places.length}</span>
+            Lugares: <span className="text-foreground">{placesCount}</span>
           </span>
           <span>
-            Comercios: <span className="text-secondary">{merchants.length}</span>
+            Comercios: <span className="text-secondary">{merchantsCount}</span>
+          </span>
+          <span>
+            Ocupación Promedio: <span className={avgCrowd > 50 ? "text-secondary" : "text-primary"}>{avgCrowd}%</span>
           </span>
           <span>
             Altitud: <span className="text-foreground">2,700m</span>
