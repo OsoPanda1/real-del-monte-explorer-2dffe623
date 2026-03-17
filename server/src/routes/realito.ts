@@ -1,87 +1,105 @@
+// ============================================================================
+// RDM Digital OS — Realito Cognitive Router v1.0
+// Router HTTP para el núcleo conversacional territorial
+// ============================================================================
+
 import { Router } from "express";
 import { z } from "zod";
+import { performance } from "perf_hooks";
+import crypto from "crypto";
 import { db } from "../lib/store.js";
-import { recommendBusinesses } from "../services/recommendations.service.js";
-import { listTourismEvents, listTourismRoutes } from "../services/content.service.js";
+import { handleRealitoChat } from "../experience/realitoController.js";
 
-const chatSchema = z.object({
-  history: z
+// ============================================================================
+// Esquema de validación de entrada
+// ============================================================================
+
+const realitoChatSchema = z.object({
+  message: z.string().min(1),
+  userPreferences: z.record(z.any()).optional(),
+  geo: z
+    .object({
+      lat: z.number(),
+      lng: z.number(),
+    })
+    .nullable()
+    .optional(),
+  contextHistory: z
     .array(
       z.object({
-        role: z.enum(["user", "assistant"]),
-        content: z.string().min(1),
-      })
+        role: z.enum(["user", "assistant", "system"]),
+        content: z.string(),
+      }),
     )
-    .default([]),
-  context: z
-    .object({
-      userId: z.string().optional(),
-      location: z
-        .object({
-          lat: z.number(),
-          lng: z.number(),
-        })
-        .optional(),
-      queryType: z.string().min(1).optional(),
-    })
     .optional(),
 });
 
-const inferIntent = (text: string): string => {
-  const value = text.toLowerCase();
-  if (value.includes("comer") || value.includes("restaurante") || value.includes("paste")) return "comer";
-  if (value.includes("aventura") || value.includes("sendero") || value.includes("naturaleza")) return "aventura";
-  if (value.includes("hotel") || value.includes("hosped")) return "hospedaje";
-  return "cultura";
-};
+// ============================================================================
+// Router
+// ============================================================================
 
 const realitoRouter = Router();
 
-realitoRouter.post("/chat", (req, res) => {
-  const parsed = chatSchema.safeParse(req.body);
+realitoRouter.post("/chat", async (req, res) => {
+  const startedAt = performance.now();
+  const interactionId = crypto.randomUUID();
+
+  const parsed = realitoChatSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
+    return res.status(400).json({
+      error: "Protocol Violation",
+      details: parsed.error.flatten(),
+      traceId: interactionId,
+    });
   }
 
-  const latestUserMessage = [...parsed.data.history].reverse().find((message) => message.role === "user");
-  const prompt = latestUserMessage?.content ?? "";
-  const intent = inferIntent(prompt || parsed.data.context?.queryType || "cultura");
+  // Dejamos que el controller maneje la lógica y la respuesta final
+  // pero registramos trazas alrededor de la llamada.
+  try {
+    // Guardamos trazabilidad mínima de entrada
+    db.interactions.set(interactionId, {
+      id: interactionId,
+      kind: "realito_chat_http_v1",
+      status: "RECEIVED",
+      createdAt: new Date().toISOString(),
+      meta: {
+        latencyMs: 0,
+        rawPreview: parsed.data.message.slice(0, 100),
+      },
+    });
 
-  const businesses = recommendBusinesses({ intent }).slice(0, 3);
-  const routes = listTourismRoutes().slice(0, 2);
-  const events = listTourismEvents().slice(0, 2);
+    // Reinyectamos la request validada al controller
+    req.body = parsed.data;
 
-  const summaryBusinesses = businesses.map((item) => item.name).join(", ");
-  const summaryRoutes = routes.map((item) => item.name).join(" y ");
+    await handleRealitoChat(req, res);
 
-  const reply = summaryBusinesses
-    ? `Te propongo comenzar con ${summaryBusinesses}. Si quieres una experiencia guiada, toma ${summaryRoutes}. Puedo ajustar por clima, horario o presupuesto.`
-    : "Aún estoy sincronizando recomendaciones. Mientras tanto, te sugiero iniciar en el Centro Histórico y la Ruta del Patrimonio Minero.";
+    // Nota: si quieres registrar SUCCESS aquí, tendrías que envolver `res.json`
+    // o migrar la lógica a un servicio puro (runRealitoKernel).
+  } catch (err) {
+    console.error(`[REALITO ROUTER ERROR - ${interactionId}]:`, err);
 
-  const interactionId = crypto.randomUUID();
-  db.interactions.set(interactionId, {
-    id: interactionId,
-    kind: "realito_chat",
-    context: intent,
-    createdAt: new Date().toISOString(),
-  });
+    db.interactions.set(interactionId, {
+      id: interactionId,
+      kind: "realito_chat_http_v1",
+      status: "ERROR",
+      createdAt: new Date().toISOString(),
+      meta: {
+        error: (err as Error).message,
+        latencyMs: performance.now() - startedAt,
+      },
+    });
 
-  return res.json({
-    reply,
-    intent,
-    recommendations: businesses,
-    routes,
-    events,
-    trace: {
-      interactionId,
-      source: "rdmx-realito-chat-v1",
-    },
-  });
+    return res.status(500).json({
+      error: "Fallo en el router de Realito.",
+      traceId: interactionId,
+    });
+  } finally {
+    const entry = db.interactions.get(interactionId);
+    if (entry?.meta) {
+      entry.meta.latencyMs = performance.now() - startedAt;
+      db.interactions.set(interactionId, entry);
+    }
+  }
 });
-import { handleRealitoChat } from "../experience/realitoController.js";
-
-const realitoRouter = Router();
-
-realitoRouter.post("/chat", handleRealitoChat);
 
 export default realitoRouter;
