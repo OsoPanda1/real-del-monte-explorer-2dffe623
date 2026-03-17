@@ -80,7 +80,7 @@ const RealitoOrb = () => {
 
             {lastTraceId && (
               <div className="px-4 py-2 border-t border-silver-light/20 font-mono text-[10px] text-silver-light/80">
-                Trace: {lastTraceId.slice(0, 8)}
+                Trace: {lastTraceId.slice(0, SHORT_TRACE_ID_LENGTH)}
               </div>
             )}
             <div className="p-3 border-t border-silver-light/20">
