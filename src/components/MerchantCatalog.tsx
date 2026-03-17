@@ -44,12 +44,19 @@ const tierColors: Record<string, string> = {
   L3: "from-muted-foreground to-foreground/40",
 };
 
+type MerchantListResponse = MerchantData[] | { items: MerchantData[] };
+
+const normalizeMerchants = (payload: MerchantListResponse | undefined): MerchantData[] => {
+  if (!payload) return [];
+  return Array.isArray(payload) ? payload : payload.items;
+};
+
 const MerchantCatalog = () => {
   const [filter, setFilter] = useState<string | null>(null);
-  const { data: apiMerchants } = useApi<MerchantData[]>("/api/merchants");
+  const { data: apiMerchants } = useApi<MerchantListResponse>("/api/merchants");
 
   const filtered = filter ? categories.filter((c) => c.tier === filter) : categories;
-  const activeMerchants = apiMerchants?.filter((m) => m.isActive) ?? [];
+  const activeMerchants = normalizeMerchants(apiMerchants).filter((m) => m.isActive);
 
   return (
     <section id="comercios" className="relative py-24">
