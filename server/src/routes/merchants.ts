@@ -120,10 +120,16 @@ merchantsRouter.get("/", (req, res) => {
   const offset = (page - 1) * pageSize;
   const items = result.slice(offset, offset + pageSize);
 
-  return res.json({
-    items,
-    pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
-  });
+  const wantsPaginatedResponse = req.query.format === "paginated";
+
+  if (wantsPaginatedResponse) {
+    return res.json({
+      items,
+      pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+    });
+  }
+
+  return res.json(items);
 });
 
 merchantsRouter.get("/:slug", (req, res) => {
