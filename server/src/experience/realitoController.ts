@@ -1,10 +1,17 @@
 // ================================================================
-// RDM Digital OS v3 — Realito AI Controller
-// Orquestador territorial conversacional
+// RDM Digital OS v1.0 — Realito AI Controller
+// Orquestador Territorial Conversacional Federado
 // ================================================================
 
 import type { Request, Response } from "express";
+import crypto from "crypto";
 import { optimizeRoute } from "./geneticOptimizer.js";
+import {
+  computeTwinOperationalScore,
+  ensureBusinessTwin,
+} from "../services/digital-twins.service.js";
+import { buildTwinsContext } from "./twinContextBuilder.js";
+import { db } from "../lib/store.js";
 import type {
   ChatMessageDTO,
   UserPreferences,
@@ -14,184 +21,341 @@ import type {
   RealitoChatResponse,
   PlannedRoute,
 } from "./types.js";
-import { buildTwinsContext } from "./twinContextBuilder.js";
-import { db } from "../lib/store.js";
 
 // ================================================================
-// Intent Detection
+// CONFIGURACIÓN DE NÚCLEO Y CONSTANTES
+// ================================================================
+
+const KERNEL_VERSION = "EOCT-RDM-X-3.5";
+const VISUAL_STYLE = "CRYSTAL_GLOW";
+
+const INTENT_MAP: Record<RealitoIntent, RegExp> = {
+  ROUTES: /ruta|tour|recorrido|itinerario|micheladas|caminar|visitar|paseo/i,
+  GASTRONOMY:
+    /comer|restaurante|bares|paste|comida|barbacoa|gastronomía|hambre|café|bebida/i,
+  HISTORY:
+    /historia|mina|museo|patrimonio|antiguo|minería|1766|siglo/i,
+  ADVENTURE:
+    /aventura|sendero|naturaleza|ecoturismo|bosque|rappel|cuatrimoto/i,
+  EVENTS: /evento|festival|fiesta|feria|celebraci/i,
+  CULTURE:
+    /cultura|arte|artesanía|platería|recorridos|leyenda|tradicion/i,
+  COMMUNITY:
+    /comunidad|foto|experiencia|compartir|reseña/i,
+  HELP: /ayuda|instrucciones|como funcionas|que haces|quien eres/i,
+};
+
+// ================================================================
+// DETECCIÓN DE INTENCIÓN
 // ================================================================
 
 function detectIntent(message: string): RealitoIntent {
-  const m = message.toLowerCase();
-  if (/ruta|tour|recorrido|itinerario|caminar|visitar|paseo/.test(m)) return "ROUTES";
-  if (/comer|restaurante|paste|comida|gastronomía|hambre|café|bebida/.test(m)) return "GASTRONOMY";
-  if (/historia|mina|museo|patrimonio|antiguo|minería|1766|siglo/.test(m)) return "HISTORY";
-  if (/aventura|sendero|naturaleza|ecoturismo|bosque|rappel|cuatrimoto/.test(m)) return "ADVENTURE";
-  if (/evento|festival|fiesta|feria|celebraci/.test(m)) return "EVENTS";
-  if (/cultura|arte|artesanía|platería|leyenda|tradici/.test(m)) return "CULTURE";
-  if (/comunidad|foto|experiencia|compartir|reseña/.test(m)) return "COMMUNITY";
+  const normalized = message.trim().toLowerCase();
+  for (const [intent, regex] of Object.entries(INTENT_MAP)) {
+    if (regex.test(normalized)) return intent as RealitoIntent;
+  }
   return "HELP";
 }
 
 // ================================================================
-// Intent Handlers — each returns text + suggested actions
+// HANDLERS DE INTENCIÓN
 // ================================================================
 
 async function handleRoutesIntent(
   message: string,
   twinsContext: TwinContext[],
   prefs: UserPreferences,
-): Promise<{ reply: string; suggestedActions: SuggestedAction[]; gaSuggestion: PlannedRoute }> {
+): Promise<{
+  reply: string;
+  suggestedActions: SuggestedAction[];
+  gaSuggestion: PlannedRoute | null;
+}> {
   const route = await optimizeRoute(prefs, twinsContext);
 
-  let reply: string;
-  if (route.stops.length > 0) {
-    const stopNames = route.stops.map((s) => s.name).join(" → ");
-    reply = `He analizado ${twinsContext.length} nodos del gemelo digital y generé una ruta optimizada con confianza del ${Math.round(route.confidenceScore * 100)}%.\n\n` +
-      `**Ruta:** ${stopNames}\n` +
-      `**Duración estimada:** ${route.objectives.totalDurationMinutes} min · **Distancia:** ${route.objectives.distanceKm} km\n\n` +
-      `La ruta prioriza baja afluencia (penalización crowd: ${route.objectives.crowdPenalty}), diversidad temática (${Math.round(route.objectives.diversityScore * 100)}%) y balance comercio/cultura.\n\n` +
-      `¿Quieres que la ajuste por duración, tipo de experiencia o evitando algún punto?`;
-  } else {
-    reply = "No encontré suficientes nodos activos en el gemelo digital para generar una ruta ahora. Intenta más tarde o pregúntame algo específico sobre un lugar.";
+  if (!route || route.stops.length === 0) {
+    return {
+      reply:
+        "El Sistema de comunicacion del sitio parece estar apagado por lo que es complicado otorgar datos en tiempo real" +
+        "Por favor, especifica un punto de interés especifico o intenta en unos minutos",
+      suggestedActions: [
+        {
+          label: "🔁 Reintentar más tarde",
+          action: "RETRY_ROUTE",
+        },
+      ],
+      gaSuggestion: null,
+    };
   }
+
+  const stopNames = route.stops.map((s) => s.name).join(" → ");
+  const confidence = Math.round(route.confidenceScore * 100);
+  const diversity = Math.round(route.objectives.diversityScore * 100);
+
+  const reply =
+    `He analizado ${twinsContext.length} sensores del sitio de forma digital y generé una ruta optimizada ` +
+    `con confianza del ${confidence}%.\n\n` +
+    `**Ruta sugerida:** ${stopNames}\n` +
+    `**Métricas operativas:** Duración: ${route.objectives.totalDurationMinutes} min · ` +
+    `Distancia: ${route.objectives.distanceKm} km\n\n` +
+    `La IA ha aplicado sujerencias viables por afluencia (${route.objectives.crowdPenalty}) ` +
+    `y ha maximizado la diversidad temática (${diversity}%) para una experiencia equilibrada.\n\n` +
+    `¿Deseas ajustar esta ruta eliminando algún punto o prefieres una duración distinta?`;
 
   return {
     reply,
     suggestedActions: [
-      { label: "🗺️ Ver ruta en el mapa", action: "OPEN_ROUTE", payload: { routeId: route.id } },
-      { label: "⏱️ Ruta más corta", action: "REQUEST_SHORTER_ROUTE" },
-      { label: "🍽️ Más gastronomía", action: "ADJUST_INTERESTS", payload: { add: "GASTRONOMIA" } },
-      { label: "🏔️ Más miradores", action: "ADJUST_INTERESTS", payload: { add: "VIEWPOINT" } },
+      {
+        label: "🗺️ Desplegar en mapa",
+        action: "OPEN_ROUTE",
+        payload: { routeId: route.id },
+      },
+      {
+        label: "⏱️ Minimizar tiempo",
+        action: "REQUEST_SHORTER_ROUTE",
+      },
+      {
+        label: "🍽️ Priorizar gastronomía",
+        action: "ADJUST_INTERESTS",
+        payload: { add: "GASTRONOMIA" },
+      },
     ],
     gaSuggestion: route,
   };
 }
 
-function handleGastronomyIntent(twinsContext: TwinContext[]): { reply: string; suggestedActions: SuggestedAction[] } {
-  const foodTwins = twinsContext.filter(
-    (t) => t.modelType === "MERCHANT_TWIN" &&
-      ((t.properties.type as string) ?? "").toUpperCase() === "FOOD",
-  );
+async function handleGastronomyIntent(
+  twinsContext: TwinContext[],
+): Promise<{ reply: string; suggestedActions: SuggestedAction[] }> {
+  const foodTwins = twinsContext
+    .filter(
+      (t) =>
+        t.modelType === "MERCHANT_TWIN" &&
+        ((t.properties.type as string) ?? "")
+          .toUpperCase() === "FOOD",
+    )
+    .map((t) => ({
+      ...t,
+      opScore: computeTwinOperationalScore(
+        ensureBusinessTwin(t as any),
+      ),
+    }))
+    .sort((a, b) => b.opScore - a.opScore);
 
-  if (foodTwins.length > 0) {
-    const sorted = [...foodTwins].sort((a, b) => (b.immersionLevel - a.immersionLevel));
-    const top3 = sorted.slice(0, 3);
-    const names = top3.map((t) => {
-      const crowd = t.telemetry.crowdLevel ?? 0;
-      const crowdLabel = crowd > 0.7 ? "🔴 concurrido" : crowd > 0.4 ? "🟡 moderado" : "🟢 tranquilo";
-      return `**${t.name}** (${crowdLabel})`;
-    }).join(", ");
-
+  if (foodTwins.length === 0) {
     return {
-      reply: `Para comer bien en Real del Monte te recomiendo: ${names}.\n\n` +
-        `Real del Monte es cuna del paste, traído por mineros de Cornwall en 1824. La Pastería El Portal frente a la plaza tiene la receta original córnica.\n\n` +
-        `¿Quieres que arme una ruta gastronómica completa con los mejores lugares?`,
+      reply:
+        "Históricamente, el paste es el pilar gastronómico de Real del Monte heredado por los ingleses, pero el platillo reginal son las enchiladas mineras" +
+        "Te recomiendo iniciar en la plaza principal y caminar hacia las pasterías típicas. " +
+        "¿Buscas algo más específico como barbacoa, mariscos o se te antojan las enchiladas mineras con un litro de pulque?",
       suggestedActions: [
-        { label: "🥟 Ruta gastronómica", action: "REQUEST_FOOD_ROUTE" },
-        { label: "🗺️ Ver en el mapa", action: "OPEN_CATEGORY", payload: { category: "FOOD" } },
-        { label: "📋 Ver todos los comercios", action: "OPEN_CATALOG" },
+        {
+          label: "🥟 Ruta gastronómica",
+          action: "REQUEST_FOOD_ROUTE",
+        },
       ],
     };
   }
 
+  const names = foodTwins.slice(0, 3).map((t) => {
+    const crowd = t.telemetry.crowdLevel ?? 0;
+    const status =
+      crowd > 0.7
+        ? "🔴 Saturado"
+        : crowd > 0.4
+          ? "🟡 Moderado"
+          : "🟢 Fluido";
+    return `**${t.name}** (${status})`;
+  }).join(", ");
+
+  const reply =
+    `Para una experiencia gastronómica óptima según la telemetría actual, te sugiero: ${names}.\n\n` +
+    `Real del Monte es reconocido como cuna del paste en México, una herencia córnica del siglo XIX ` +
+    `que sigue viva en sus comercios locales.\n\n` +
+    `¿Deseas que trace una ruta que conecte los puntos con mejor recomendacion en calidad y servicio con recomendaciones de otros visitantes?`;
+
   return {
-    reply: "Real del Monte es cuna del paste, traído por mineros de Cornwall en 1824. Te recomiendo la Pastería El Portal frente a la plaza principal para el paste tradicional, y La Casa de los Tacos para carnitas auténticas. ¿Quieres que arme una ruta gastronómica?",
+    reply,
     suggestedActions: [
-      { label: "🥟 Ruta gastronómica", action: "REQUEST_FOOD_ROUTE" },
-      { label: "📋 Ver catálogo", action: "OPEN_CATALOG" },
+      {
+        label: "🥟 Ruta de los pastes",
+        action: "REQUEST_FOOD_ROUTE",
+      },
+      {
+        label: "🗺️ Ver mapa gastronómico",
+        action: "OPEN_CATEGORY",
+        payload: { category: "FOOD" },
+      },
+      {
+        label: "📋 Ver catálogo de comercios",
+        action: "OPEN_CATALOG",
+      },
     ],
   };
 }
 
-function handleHistoryIntent(twinsContext: TwinContext[]): { reply: string; suggestedActions: SuggestedAction[] } {
-  const historyTwins = twinsContext.filter(
-    (t) => {
-      const type = ((t.properties.type as string) ?? "").toUpperCase();
-      return type === "HISTORIC" || type === "MUSEUM" || type === "MINE";
-    },
-  );
+function handleHistoryIntent(
+  twinsContext: TwinContext[],
+): { reply: string; suggestedActions: SuggestedAction[] } {
+  const historyTwins = twinsContext.filter((t) => {
+    const type = ((t.properties.type as string) ?? "").toUpperCase();
+    return ["HISTORIC", "MUSEUM", "MINE"].includes(type);
+  });
 
-  const placesInfo = historyTwins.slice(0, 3).map((t) => `**${t.name}**`).join(", ");
+  const placesInfo =
+    historyTwins.slice(0, 3).map((t) => `**${t.name}**`).join(", ") ||
+    "Mina de Acosta, Panteón Inglés, Museo de Medicina Laboral, Museo del Paste";
+
+  const reply =
+    `Real del Monte concentra varios siglos de narrativa minera. ` +
+    `Aquí en 1766 se documenta una de las primeras huelgas obreras del continente, marcada como historia negra al no ser documentada oficialmente por historiadores.\n\n` +
+    `Nodos históricos destacados: ${placesInfo}.\n\n` +
+    `La Mina de Acosta permite descender al subsuelo minero siente en la piel la tradicion minera, mientras que el Panteón Inglés conserva ` +
+    `tumbas orientadas hacia Inglaterra y una simbología particular.\n\n` +
+     `Conoce la primer maquina de rayos X que llego a Latinoamerica esta aqui en real del monte` +
+    `¿Te interesa que Realito genere una ruta del patrimonio minero?`;
 
   return {
-    reply: `Real del Monte tiene más de 5 siglos de historia minera. En 1766 ocurrió aquí la primera huelga laboral de América.\n\n` +
-      `Lugares históricos destacados: ${placesInfo || "Centro Histórico, Mina de Acosta, Panteón Inglés"}.\n\n` +
-      `La Mina de Acosta te permite descender 400m bajo tierra, y el Panteón Inglés es el único cementerio británico en Latinoamérica, con tumbas orientadas hacia Inglaterra.\n\n` +
-      `¿Te interesa una ruta del patrimonio minero?`,
+    reply,
     suggestedActions: [
-      { label: "⛏️ Ruta patrimonial", action: "REQUEST_HERITAGE_ROUTE" },
-      { label: "🗺️ Ver sitios históricos", action: "OPEN_CATEGORY", payload: { category: "HISTORIC" } },
-      { label: "📜 Leer leyendas", action: "NAVIGATE", payload: { path: "/relatos" } },
+      {
+        label: "⛏️ Ruta del patrimonio",
+        action: "REQUEST_HERITAGE_ROUTE",
+      },
+      {
+        label: "🗺️ Ver sitios históricos",
+        action: "OPEN_CATEGORY",
+        payload: { category: "HISTORIC" },
+      },
+      {
+        label: "📜 Escuchar leyendas",
+        action: "NAVIGATE",
+        payload: { path: "/relatos" },
+      },
     ],
   };
 }
 
-function handleAdventureIntent(): { reply: string; suggestedActions: SuggestedAction[] } {
+function handleAdventureIntent(): {
+  reply: string;
+  suggestedActions: SuggestedAction[];
+} {
+  const reply =
+    `A más de 2,700 metros sobre el nivel del mar, el entorno de oyamel que rodea ` +
+    `Real del Monte ofrece condiciones ideales para turismo de aventura.\n\n` +
+    `La Peña del Zumate y el bosque del Hiloche son puntos clave para senderismo, rappel y rutas de alta intensidad.\n\n` +
+    `¿Cuál es tu nivel de experiencia y cuánto tiempo planeas dedicar a la montaña hoy?`;
+
   return {
-    reply: `A 2,700m de altitud, los bosques de oyamel y pino ofrecen senderos increíbles.\n\n` +
-      `El Cristo Rey en la Peña del Zumate tiene vistas panorámicas de 360°. Hay rutas de rappelling con Eco Aventuras RDM y recorridos en cuatrimoto por la sierra.\n\n` +
-      `¿Cuántas horas tienes disponibles y qué nivel de intensidad buscas?`,
+    reply,
     suggestedActions: [
-      { label: "🏔️ Ruta de aventura", action: "REQUEST_ADVENTURE_ROUTE" },
-      { label: "🌲 Ver ecoturismo", action: "NAVIGATE", payload: { path: "/ecoturismo" } },
-      { label: "🗺️ Miradores en el mapa", action: "OPEN_CATEGORY", payload: { category: "VIEWPOINT" } },
+      {
+        label: "🏔️ Ruta de aventura",
+        action: "REQUEST_ADVENTURE_ROUTE",
+      },
+      {
+        label: "🌲 Explorar ecoturismo",
+        action: "NAVIGATE",
+        payload: { path: "/ecoturismo" },
+      },
+      {
+        label: "🗺️ Miradores 360°",
+        action: "OPEN_CATEGORY",
+        payload: { category: "VIEWPOINT" },
+      },
     ],
   };
 }
 
-function handleEventsIntent(): { reply: string; suggestedActions: SuggestedAction[] } {
+function handleEventsIntent(): {
+  reply: string;
+  suggestedActions: SuggestedAction[];
+} {
+  const reply =
+    `El calendario cultural de Real del Monte incluye:\n\n` +
+    `🎉 Festival del Paste (octubre)\n` +
+    `🎭 Festival de las Ánimas (noviembre)\n` +
+    `🎭 Feria Patronal Señor de Zelontla (enero)\n` +
+    `⛏️ Feria de la Plata (julio)\n\n` +
+    `¿Deseas consultar la agenda sincronizada o planear tu visita en torno a alguno de estos eventos?`;
+
   return {
-    reply: `Real del Monte celebra festivales únicos durante todo el año:\n\n` +
-      `🎉 **Festival Internacional del Paste** (octubre)\n` +
-      `🎭 **Festival de las Ánimas** (noviembre)\n` +
-      `⛏️ **Feria de la Plata** (julio)\n` +
-      `🎪 **Fiestas Patronales de la Asunción** (agosto)\n\n` +
-      `¿Quieres ver el calendario completo de eventos?`,
+    reply,
     suggestedActions: [
-      { label: "📅 Ver calendario", action: "NAVIGATE", payload: { path: "/eventos" } },
-      { label: "🗺️ Planear visita", action: "REQUEST_EVENT_ROUTE" },
+      {
+        label: "📅 Abrir calendario",
+        action: "NAVIGATE",
+        payload: { path: "/eventos" },
+      },
+      {
+        label: "🗺️ Planear según eventos",
+        action: "REQUEST_EVENT_ROUTE",
+      },
     ],
   };
 }
 
-function handleCultureIntent(): { reply: string; suggestedActions: SuggestedAction[] } {
+function handleCultureIntent(): {
+  reply: string;
+  suggestedActions: SuggestedAction[];
+} {
+  const reply =
+    `La identidad de este territorio mezcla herencia minera, británica y serrana:\n\n` +
+    `💎 Platería de autor\n` +
+    `🎨 Galerías y talleres de arte local\n` +
+    `👻 Relatos del subsuelo y leyendas de aparecidos\n\n` +
+    `¿Qué vertiente cultural deseas explorar hoy: artesanías, arte o leyendas?`;
+
   return {
-    reply: `La cultura de Real del Monte fusiona herencia indígena, colonial y británica:\n\n` +
-      `💎 **Platería artesanal** — tradición de siglos en trabajo de plata\n` +
-      `🎨 **Arte local** — galerías y talleres de artistas de la sierra\n` +
-      `👻 **Leyendas mineras** — relatos de aparecidos y tesoros enterrados\n` +
-      `⛏️ **Dichos mineros** — la sabiduría oral de 5 siglos de minería\n\n` +
-      `¿Qué dimensión cultural te interesa explorar?`,
+    reply,
     suggestedActions: [
-      { label: "💎 Artesanías", action: "NAVIGATE", payload: { path: "/arte" } },
-      { label: "👻 Leyendas", action: "NAVIGATE", payload: { path: "/relatos" } },
-      { label: "⛏️ Dichos mineros", action: "NAVIGATE", payload: { path: "/dichos" } },
+      {
+        label: "💎 Ver artesanías",
+        action: "NAVIGATE",
+        payload: { path: "/arte" },
+      },
+      {
+        label: "👻 Leer leyendas",
+        action: "NAVIGATE",
+        payload: { path: "/relatos" },
+      },
     ],
   };
 }
 
-function handleHelpIntent(): { reply: string; suggestedActions: SuggestedAction[] } {
+function handleHelpIntent(): {
+  reply: string;
+  suggestedActions: SuggestedAction[];
+} {
+  const reply =
+    `Soy Realito, el núcleo cognitivo conversacional de RDM Digital. ` +
+    `Mi función es optimizar tu experiencia en el territorio usando el gemelo digital.\n\n` +
+    `Capacidades actuales:\n` +
+    `🗺️ Rutas con IA (optimización genética y telemetría)\n` +
+    `🥟 Recomendaciones gastronómicas\n` +
+    `⛏️ Contexto histórico y cultural\n\n` +
+    `Puedes pedirme que te sugiera una ruta, dónde comer o que te cuente la historia local.`;
+
   return {
-    reply: `Soy Realito, el núcleo cognitivo del gemelo digital de Real del Monte.\n\n` +
-      `Puedo ayudarte a:\n` +
-      `🗺️ **Diseñar rutas** optimizadas con IA y telemetría en tiempo real\n` +
-      `🥟 **Descubrir gastronomía** — pastes, carnitas, mole y más\n` +
-      `⛏️ **Explorar historia** — 5 siglos de minería y herencia británica\n` +
-      `🏔️ **Planear aventura** — senderismo, rappel, miradores\n` +
-      `📅 **Encontrar eventos** — festivales, ferias y fiestas\n\n` +
-      `¿Qué experiencia buscas hoy?`,
+    reply,
     suggestedActions: [
-      { label: "🗺️ Sugerir ruta", action: "SUGGEST_ROUTE" },
-      { label: "🥟 Dónde comer", action: "FIND_FOOD" },
-      { label: "⛏️ Contar historia", action: "TELL_HISTORY" },
-      { label: "🏔️ Aventura", action: "FIND_ADVENTURE" },
+      {
+        label: "🗺️ Sugerir ruta",
+        action: "SUGGEST_ROUTE",
+      },
+      {
+        label: "🥟 Dónde comer",
+        action: "FIND_FOOD",
+      },
+      {
+        label: "⛏️ Historia local",
+        action: "TELL_HISTORY",
+      },
     ],
   };
 }
 
 // ================================================================
-// Main Handler
+// ORQUESTADOR PRINCIPAL
 // ================================================================
 
 export const handleRealitoChat = async (req: Request, res: Response) => {
@@ -199,90 +363,100 @@ export const handleRealitoChat = async (req: Request, res: Response) => {
     message?: string;
     contextHistory?: ChatMessageDTO[];
     userPreferences?: UserPreferences;
-    sessionId?: string;
     geo?: { lat: number; lng: number } | null;
   };
 
-  if (!body.message || typeof body.message !== "string" || !body.message.trim()) {
-    return res.status(400).json({ error: "El campo 'message' es obligatorio." });
+  const rawMessage = body.message?.trim();
+  if (!rawMessage) {
+    return res
+      .status(400)
+      .json({ error: "Mensaje vacío: requerido por el Kernel." });
   }
 
-  const message = body.message.trim();
-  const userPreferences = body.userPreferences ?? {};
+  try {
+    const userPreferences = body.userPreferences ?? {};
+    const twinsContext = buildTwinsContext();
+    const intent = detectIntent(rawMessage);
 
-  // Build twin context from in-memory store
-  const twinsContext = buildTwinsContext();
+    let reply = "";
+    let suggestedActions: SuggestedAction[] = [];
+    let gaSuggestion: PlannedRoute | null = null;
 
-  // Detect intent
-  const intent = detectIntent(message);
+    switch (intent) {
+      case "ROUTES": {
+        const result = await handleRoutesIntent(
+          rawMessage,
+          twinsContext,
+          userPreferences,
+        );
+        reply = result.reply;
+        suggestedActions = result.suggestedActions;
+        gaSuggestion = result.gaSuggestion;
+        break;
+      }
+      case "GASTRONOMY": {
+        const result = await handleGastronomyIntent(twinsContext);
+        reply = result.reply;
+        suggestedActions = result.suggestedActions;
+        break;
+      }
+      case "HISTORY": {
+        const result = handleHistoryIntent(twinsContext);
+        reply = result.reply;
+        suggestedActions = result.suggestedActions;
+        break;
+      }
+      case "ADVENTURE": {
+        const result = handleAdventureIntent();
+        reply = result.reply;
+        suggestedActions = result.suggestedActions;
+        break;
+      }
+      case "EVENTS": {
+        const result = handleEventsIntent();
+        reply = result.reply;
+        suggestedActions = result.suggestedActions;
+        break;
+      }
+      case "CULTURE": {
+        const result = handleCultureIntent();
+        reply = result.reply;
+        suggestedActions = result.suggestedActions;
+        break;
+      }
+      default: {
+        const result = handleHelpIntent();
+        reply = result.reply;
+        suggestedActions = result.suggestedActions;
+        break;
+      }
+    }
 
-  let reply: string;
-  let suggestedActions: SuggestedAction[];
-  let gaSuggestion: PlannedRoute | null = null;
+    const interactionId = crypto.randomUUID();
+    db.interactions.set(interactionId, {
+      id: interactionId,
+      kind: `realito_v3_${intent.toLowerCase()}`,
+      context: rawMessage.substring(0, 100),
+      createdAt: new Date().toISOString(),
+    });
 
-  switch (intent) {
-    case "ROUTES": {
-      const result = await handleRoutesIntent(message, twinsContext, userPreferences);
-      reply = result.reply;
-      suggestedActions = result.suggestedActions;
-      gaSuggestion = result.gaSuggestion;
-      break;
-    }
-    case "GASTRONOMY": {
-      const result = handleGastronomyIntent(twinsContext);
-      reply = result.reply;
-      suggestedActions = result.suggestedActions;
-      break;
-    }
-    case "HISTORY": {
-      const result = handleHistoryIntent(twinsContext);
-      reply = result.reply;
-      suggestedActions = result.suggestedActions;
-      break;
-    }
-    case "ADVENTURE": {
-      const result = handleAdventureIntent();
-      reply = result.reply;
-      suggestedActions = result.suggestedActions;
-      break;
-    }
-    case "EVENTS": {
-      const result = handleEventsIntent();
-      reply = result.reply;
-      suggestedActions = result.suggestedActions;
-      break;
-    }
-    case "CULTURE": {
-      const result = handleCultureIntent();
-      reply = result.reply;
-      suggestedActions = result.suggestedActions;
-      break;
-    }
-    default: {
-      const result = handleHelpIntent();
-      reply = result.reply;
-      suggestedActions = result.suggestedActions;
-      break;
-    }
+    const response: RealitoChatResponse = {
+      reply,
+      intent,
+      suggestedActions,
+      gaSuggestion,
+      engine: KERNEL_VERSION,
+      visualStyle: VISUAL_STYLE,
+      twinNodesQueried: twinsContext.length,
+      interactionId,
+    };
+
+    return res.json(response);
+  } catch (error) {
+    console.error("KERNEL ERROR:", error);
+    return res
+      .status(500)
+      .json({ error: "Fallo en el núcleo de Realito AI." });
   }
-
-  // Log interaction
-  const interactionId = crypto.randomUUID();
-  db.interactions.set(interactionId, {
-    id: interactionId,
-    kind: `realito_chat_${intent.toLowerCase()}`,
-    context: message.substring(0, 200),
-    createdAt: new Date().toISOString(),
-  });
-
-  const response: RealitoChatResponse = {
-    reply,
-    intent,
-    suggestedActions,
-    gaSuggestion,
-    engine: "RDM-X-Hybrid-v3",
-    twinNodesQueried: twinsContext.length,
-  };
-
-  return res.json(response);
 };
+```
