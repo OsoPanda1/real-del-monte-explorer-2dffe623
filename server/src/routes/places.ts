@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { paginateArray, extractPaginationParams } from "../services/pagination.js";
 
 const placesRouter = Router();
 
@@ -122,10 +123,10 @@ const distanceKm = (a: { lat: number; lng: number }, b: { lat: number; lng: numb
 };
 
 placesRouter.get("/", (req, res) => {
-  const page = Math.max(1, Number(req.query.page ?? 1));
-  const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize ?? 10)));
+  const pagination = extractPaginationParams(req.query as Record<string, unknown>);
   const type = typeof req.query.type === "string" ? req.query.type.toUpperCase() : undefined;
   const tag = typeof req.query.tag === "string" ? req.query.tag.toLowerCase() : undefined;
+  const search = typeof req.query.search === "string" ? req.query.search.toLowerCase() : undefined;
   const lat = Number(req.query.lat);
   const lng = Number(req.query.lng);
   const radiusKm = Number(req.query.radiusKm ?? 5);
@@ -140,18 +141,20 @@ placesRouter.get("/", (req, res) => {
     result = result.filter((place) => place.tags.some((entry) => entry.toLowerCase() === tag));
   }
 
+  if (search) {
+    result = result.filter(
+      (place) =>
+        place.name.toLowerCase().includes(search) ||
+        place.description.toLowerCase().includes(search),
+    );
+  }
+
   if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
     result = result.filter((place) => distanceKm(place.location, { lat, lng }) <= radiusKm);
   }
 
-  const total = result.length;
-  const offset = (page - 1) * pageSize;
-  const items = result.slice(offset, offset + pageSize);
-
-  return res.json({
-    items,
-    pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
-  });
+  const paginated = paginateArray(result, pagination);
+  return res.json(paginated);
 });
 
 placesRouter.get("/:slug", (req, res) => {

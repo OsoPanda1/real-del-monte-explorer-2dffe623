@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useApi } from "@/hooks/useApi";
 import { Link } from "react-router-dom";
+import { usePaginated } from "@/hooks/usePaginated";
+import PaginationControls from "@/components/PaginationControls";
 
 interface MerchantData {
   id: string;
@@ -16,6 +17,8 @@ interface MerchantData {
   phone: string | null;
   tags: string[];
   isActive: boolean;
+  level?: string;
+  isPremium?: boolean;
 }
 
 const categories = [
@@ -46,10 +49,17 @@ const tierColors: Record<string, string> = {
 
 const MerchantCatalog = () => {
   const [filter, setFilter] = useState<string | null>(null);
-  const { data: apiMerchants } = useApi<MerchantData[]>("/api/merchants");
+
+  const {
+    data: merchants,
+    meta,
+    loading,
+    page,
+    goToPage,
+  } = usePaginated<MerchantData>("/api/merchants", 1, 12);
 
   const filtered = filter ? categories.filter((c) => c.tier === filter) : categories;
-  const activeMerchants = apiMerchants?.filter((m) => m.isActive) ?? [];
+  const activeMerchants = merchants?.filter((m) => m.isActive) ?? [];
 
   return (
     <section id="comercios" className="relative py-24">
@@ -72,8 +82,19 @@ const MerchantCatalog = () => {
           </p>
         </motion.div>
 
-        {/* Active merchants from API */}
-        {activeMerchants.length > 0 && (
+        {/* Active merchants from API (paginated) */}
+        {loading && (
+          <div className="mb-12 text-center">
+            <div className="inline-flex items-center gap-3 glass-surface px-6 py-3">
+              <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
+              <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                Cargando comercios del gemelo digital…
+              </span>
+            </div>
+          </div>
+        )}
+
+        {!loading && activeMerchants.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -81,10 +102,15 @@ const MerchantCatalog = () => {
             className="mb-12"
           >
             <h3 className="font-mono text-xs uppercase tracking-widest text-primary mb-4">
-              Comercios Activos en el Gemelo Digital ({activeMerchants.length})
+              Comercios Activos en el Gemelo Digital
+              {meta && (
+                <span className="text-muted-foreground ml-2">
+                  ({meta.totalItems} registrados · Página {meta.page}/{meta.totalPages})
+                </span>
+              )}
             </h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeMerchants.slice(0, 6).map((merchant, i) => (
+              {activeMerchants.map((merchant, i) => (
                 <motion.div
                   key={merchant.id}
                   initial={{ opacity: 0, y: 15 }}
@@ -115,10 +141,16 @@ const MerchantCatalog = () => {
                 </motion.div>
               ))}
             </div>
-            {activeMerchants.length > 6 && (
+
+            {/* Pagination controls */}
+            {meta && meta.totalPages > 1 && (
+              <PaginationControls meta={meta} onPageChange={goToPage} />
+            )}
+
+            {activeMerchants.length > 0 && (
               <div className="mt-4 text-center">
                 <Link to="/catalogo" className="font-mono text-xs text-primary hover:text-foreground transition-colors">
-                  Ver todos los comercios →
+                  Ver catálogo completo →
                 </Link>
               </div>
             )}

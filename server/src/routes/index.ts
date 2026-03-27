@@ -21,6 +21,7 @@ import merchantsRouter from "./merchants.js";
 import twinsRouter from "./twins.js";
 import experienceRouter from "./experience.js";
 import systemRouter from "./system.js";
+import rdmxStatusRouter from "./rdmx-status.js";
 
 const apiRouter = Router();
 
@@ -46,5 +47,6 @@ apiRouter.use("/merchants", merchantsRouter);
 apiRouter.use("/twins", twinsRouter);
 apiRouter.use("/experience", experienceRouter);
 apiRouter.use("/", systemRouter);
+apiRouter.use("/rdmx", rdmxStatusRouter);
 
 export default apiRouter;

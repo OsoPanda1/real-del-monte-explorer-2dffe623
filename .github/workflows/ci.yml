@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -24,6 +26,15 @@ jobs:
       - name: Install server deps
         run: npm ci
         working-directory: server
+
+      - name: Install submodule deps
+        run: |
+          for dir in packages/*; do
+            if [ -f "$dir/package.json" ]; then
+              echo "Installing deps in $dir"
+              (cd "$dir" && npm ci 2>/dev/null || npm install 2>/dev/null || echo "skip $dir")
+            fi
+          done
 
       - name: Frontend lint
         run: npm run lint
