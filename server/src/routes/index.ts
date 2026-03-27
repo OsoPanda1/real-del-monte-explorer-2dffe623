@@ -47,5 +47,6 @@ apiRouter.use("/merchants", merchantsRouter);
 apiRouter.use("/twins", twinsRouter);
 apiRouter.use("/experience", experienceRouter);
 apiRouter.use("/", systemRouter);
+apiRouter.use("/rdmx", rdmxStatusRouter);
 
 export default apiRouter;
