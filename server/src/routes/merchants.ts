@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { paginateArray, extractPaginationParams } from "../services/pagination.js";
 
 const merchantsRouter = Router();
 
