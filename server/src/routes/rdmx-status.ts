@@ -72,6 +72,13 @@ const MODULES: ModuleStatus[] = [
     status: "partial",
     version: "0.1.0-alpha",
   },
+  {
+    id: "quantum-system-tamv",
+    type: "ai",
+    description: "Sistema quantum TAMV — Isabella AI, ChronusEngine, DecisionStore",
+    status: "integrated",
+    version: "3.0.0",
+  },
 ];
 
 rdmxStatusRouter.get("/status", (_req, res) => {

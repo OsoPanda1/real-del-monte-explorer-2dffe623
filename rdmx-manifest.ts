@@ -86,6 +86,15 @@ export const RDMX_MODULES: RepoModule[] = [
     entryPoints: ["src/protocols/index.ts"],
     status: "partial",
   },
+  {
+    id: "quantum-system-tamv",
+    repo: "https://github.com/OsoPanda1/quantum-system-tamv.git",
+    path: "packages/quantum-system-tamv",
+    type: "ai",
+    description: "Sistema quantum TAMV — Isabella AI, ChronusEngine, DecisionStore, agentes de turismo/cultura/comercio",
+    entryPoints: ["src/main.py", "lib/isabella.ts"],
+    status: "integrated",
+  },
 ];
 
 export const MODULE_ALIASES: Record<string, string> = {
@@ -96,4 +105,5 @@ export const MODULE_ALIASES: Record<string, string> = {
   "@rdm/nexus": "packages/genesis-digytamv-nexus/src",
   "@rdm/smartcity": "packages/rdm-smart-city-os/src",
   "@rdm/civilizational": "packages/civilizational-core/src",
+  "@rdm/quantum": "packages/quantum-system-tamv/src",
 };

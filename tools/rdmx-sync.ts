@@ -21,6 +21,7 @@ const MODULES: ModuleRef[] = [
   { id: "citemesh-roots", repo: "https://github.com/OsoPanda1/citemesh-roots.git", path: "packages/citemesh-roots" },
   { id: "genesis-digytamv-nexus", repo: "https://github.com/OsoPanda1/genesis-digytamv-nexus.git", path: "packages/genesis-digytamv-nexus" },
   { id: "civilizational-core", repo: "https://github.com/OsoPanda1/civilizational-core.git", path: "packages/civilizational-core" },
+  { id: "quantum-system-tamv", repo: "https://github.com/OsoPanda1/quantum-system-tamv.git", path: "packages/quantum-system-tamv" },
 ];
 
 function run(cmd: string, cwd?: string): string {
