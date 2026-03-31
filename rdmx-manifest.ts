@@ -105,4 +105,5 @@ export const MODULE_ALIASES: Record<string, string> = {
   "@rdm/nexus": "packages/genesis-digytamv-nexus/src",
   "@rdm/smartcity": "packages/rdm-smart-city-os/src",
   "@rdm/civilizational": "packages/civilizational-core/src",
+  "@rdm/quantum": "packages/quantum-system-tamv/src",
 };
