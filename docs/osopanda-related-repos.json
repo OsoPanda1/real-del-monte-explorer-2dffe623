@@ -1,0 +1,10 @@
+{
+  "generatedAt": "2026-04-19T00:00:00.000Z",
+  "user": "OsoPanda1",
+  "status": "pending_remote_fetch",
+  "notes": [
+    "Run `node tools/fuse-osopanda-repos.mjs` in an environment with GitHub API access.",
+    "The script filters up to 12 repositories by RDM/TAMV/geolocation/XR keywords and stores them here."
+  ],
+  "related": []
+}

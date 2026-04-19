@@ -54,4 +54,39 @@ systemRouter.get("/ready", async (_req, res) => {
   return res.json({ ok: true, checks: { db } });
 });
 
+systemRouter.get("/master-report", (_req, res) => {
+  return res.json({
+    platform: "RDM Digital / TAMV DM-X4",
+    generatedAt: new Date().toISOString(),
+    architecture: {
+      layers: ["L0", "L1", "L2", "L3", "L4", "L5", "L6", "L7"],
+      coreModules: [
+        "auth",
+        "users",
+        "profiles",
+        "social",
+        "streams",
+        "protocols",
+        "xr",
+        "economy",
+        "geolocation",
+      ],
+      realtime: ["/api/geolocation/telemetry/stream", "/api/xr/gateway/stream"],
+    },
+    status: {
+      geolocationMvp: "active",
+      protocolOrchestrator: "active",
+      xrGateway: "active",
+      dbReady: Boolean(config.databaseUrl),
+    },
+    roadmap: [
+      { phase: "db-prisma", targetDays: 3, priority: "P1" },
+      { phase: "auth-hardening-refresh-token", targetDays: 2, priority: "P1" },
+      { phase: "stripe-subscription-flow", targetDays: 2, priority: "P1" },
+      { phase: "realito-contextual-memory", targetDays: 4, priority: "P2" },
+      { phase: "offline-pwa-sync", targetDays: 5, priority: "P2" },
+    ],
+  });
+});
+
 export default systemRouter;
