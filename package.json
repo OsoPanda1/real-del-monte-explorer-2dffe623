@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "dev:api": "cd server && npm run dev",
-    "build:api": "cd server && npm run build"
+    "build:api": "cd server && npm run build",
+    "fuse:osopanda": "node tools/fuse-osopanda-repos.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
