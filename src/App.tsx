@@ -24,6 +24,9 @@ const QuienesSomos = lazy(() => import("./pages/QuienesSomos"));
 const Donar = lazy(() => import("./pages/Donar"));
 const GraciasDonativo = lazy(() => import("./pages/GraciasDonativo"));
 const ComerciosPanel = lazy(() => import("./pages/ComerciosPanel"));
+const TAMVHub = lazy(() => import("./pages/TAMVHub"));
+const TAMVStatus = lazy(() => import("./pages/TAMVStatus"));
+const TAMVApiExplorer = lazy(() => import("./pages/TAMVApiExplorer"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -60,6 +63,9 @@ const AnimatedRoutes = () => {
           <Route path="/donar" element={<Donar />} />
           <Route path="/gracias-donativo" element={<GraciasDonativo />} />
           <Route path="/comercios/panel" element={<ComerciosPanel />} />
+          <Route path="/tamv" element={<TAMVHub />} />
+          <Route path="/tamv/status" element={<TAMVStatus />} />
+          <Route path="/tamv/api" element={<TAMVApiExplorer />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

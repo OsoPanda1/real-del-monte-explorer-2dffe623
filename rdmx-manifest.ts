@@ -95,6 +95,15 @@ export const RDMX_MODULES: RepoModule[] = [
     entryPoints: ["src/main.py", "lib/isabella.ts"],
     status: "integrated",
   },
+  {
+    id: "tamv-online-nextgen",
+    repo: "lovable://projects/e7d6549a-68e6-44f5-b5af-c602adada6bc",
+    path: "packages/tamv-online-nextgen",
+    type: "ai",
+    description: "TAMV Online NextGen™ — Civilization Hub, Isabella AI emocional, MSR Bridge, DreamSpaces, Phoenix 20·30·50, BABAS, Fénix Rex, ANUBIS-ZK",
+    entryPoints: ["src/pages/TAMVHub.tsx", "src/stores/tamv/isabellaStore.ts", "server/src/routes/tamv.ts"],
+    status: "integrated",
+  },
 ];
 
 export const MODULE_ALIASES: Record<string, string> = {
@@ -106,4 +115,5 @@ export const MODULE_ALIASES: Record<string, string> = {
   "@rdm/smartcity": "packages/rdm-smart-city-os/src",
   "@rdm/civilizational": "packages/civilizational-core/src",
   "@rdm/quantum": "packages/quantum-system-tamv/src",
+  "@rdm/tamv": "packages/tamv-online-nextgen/src",
 };
