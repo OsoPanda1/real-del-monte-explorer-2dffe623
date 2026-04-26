@@ -10,6 +10,7 @@ const navItems = [
   { label: "Rutas", path: "/rutas" },
   { label: "Comercios", path: "/catalogo" },
   { label: "Eventos", path: "/eventos" },
+  { label: "TAMV", path: "/tamv" },
   { label: "Mapa Vivo", path: "/#mapa" },
 ];
 
@@ -27,6 +28,7 @@ const chapters = [
   { id: "eventos", label: "Eventos", preview: "Agenda", path: "/eventos" },
   { id: "comunidad", label: "Muro Global", preview: "Comunidad", path: "/comunidad" },
   { id: "nosotros", label: "Quiénes Somos", preview: "Equipo", path: "/quienes-somos" },
+  { id: "tamv", label: "TAMV Civilization Hub", preview: "Nodo Cero", path: "/tamv" },
   { id: "apoya", label: "Apoya RDM", preview: "Donaciones", path: "/donar" },
 ];
 
