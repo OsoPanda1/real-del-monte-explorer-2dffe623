@@ -200,6 +200,7 @@ const TAMVHub = () => {
               </CardHeader>
               <CardContent className="space-y-2">
                 {[
+                  { label: "Tesis Soberana TAMV", path: "/tamv/thesis", icon: ScrollText },
                   { label: "Estado del Nodo Cero", path: "/tamv/status", icon: Radio },
                   { label: "Explorador de API", path: "/tamv/api", icon: ScrollText },
                   { label: "Realito AI (Local)", path: "/", icon: Sparkles },
