@@ -4,6 +4,7 @@ import SitesSection from "@/components/SitesSection";
 import QuickLinksSection from "@/components/QuickLinksSection";
 import MapSection from "@/components/MapSection";
 import MerchantCatalog from "@/components/MerchantCatalog";
+import NodoCeroBanner from "@/components/NodoCeroBanner";
 import { SEOMeta, PAGE_SEO } from "@/components/SEOMeta";
 
 const Index = () => {
@@ -11,6 +12,7 @@ const Index = () => {
     <MainLayout>
       <SEOMeta {...PAGE_SEO.home} />
       <HeroSection />
+      <NodoCeroBanner />
       <SitesSection />
       <QuickLinksSection />
       <div id="mapa">
