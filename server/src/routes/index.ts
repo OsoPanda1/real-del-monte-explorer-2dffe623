@@ -23,6 +23,7 @@ import experienceRouter from "./experience.js";
 import systemRouter from "./system.js";
 import rdmxStatusRouter from "./rdmx-status.js";
 import geolocationRouter from "./geolocation.js";
+import tamvRouter from "./tamv.js";
 
 const apiRouter = Router();
 
@@ -50,5 +51,6 @@ apiRouter.use("/experience", experienceRouter);
 apiRouter.use("/", systemRouter);
 apiRouter.use("/rdmx", rdmxStatusRouter);
 apiRouter.use("/geolocation", geolocationRouter);
+apiRouter.use("/tamv", tamvRouter);
 
 export default apiRouter;
