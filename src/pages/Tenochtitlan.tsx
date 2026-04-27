@@ -41,9 +41,9 @@ const Tenochtitlan = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOMeta
-        title="System Tenochtitlán · Kernel Soberano RDM Digital"
+        title="System Tenochtitlán · Kernel Soberano"
         description="Dashboard en vivo del Sistema Tenochtitlán: 9 centinelas, 6 radares y 48 nodos funcionales del Nodo Cero RDM Digital."
-        canonical="/tenochtitlan"
+        url="/tenochtitlan"
       />
       <NavBar />
 
