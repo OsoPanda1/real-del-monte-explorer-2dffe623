@@ -1,90 +1,80 @@
 import { useEffect, useRef } from "react";
 
+type Particle = {
+  x: number;
+  y: number;
+  size: number;
+  vx: number;
+  vy: number;
+  opacity: number;
+  hue: number;
+};
+
 const FloatingParticles = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.6);
+
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
+
     resize();
     window.addEventListener("resize", resize);
 
-    interface Particle {
-      x: number; y: number; size: number; speedY: number; speedX: number;
-      opacity: number; color: string; pulse: number; pulseSpeed: number;
-    }
+    const particles: Particle[] = Array.from({ length: 44 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: Math.random() * 2 + 0.6,
+      vx: (Math.random() - 0.5) * 0.16,
+      vy: (Math.random() - 0.5) * 0.18,
+      opacity: Math.random() * 0.35 + 0.08,
+      hue: Math.random() > 0.25 ? 198 : 43,
+    }));
 
-    const particles: Particle[] = [];
-    const colors = ["#D4AF37", "#C9A227", "#B8941F", "#E5C100", "#45E6FF"];
+    let rafId = 0;
 
-    for (let i = 0; i < 60; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 2.5 + 0.5,
-        speedY: (Math.random() - 0.5) * 0.4,
-        speedX: (Math.random() - 0.5) * 0.2,
-        opacity: Math.random() * 0.4 + 0.1,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        pulse: Math.random() * Math.PI * 2,
-        pulseSpeed: Math.random() * 0.02 + 0.005,
-      });
-    }
+    const draw = () => {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-    let animId: number;
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach((p) => {
-        p.y += p.speedY;
-        p.x += p.speedX;
-        p.pulse += p.pulseSpeed;
-        const currentOpacity = p.opacity * (0.5 + 0.5 * Math.sin(p.pulse));
+      particles.forEach((particle) => {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
 
-        if (p.y > canvas.height + 10) { p.y = -10; p.x = Math.random() * canvas.width; }
-        if (p.y < -10) { p.y = canvas.height + 10; }
-        if (p.x > canvas.width + 10) p.x = -10;
-        if (p.x < -10) p.x = canvas.width + 10;
+        if (particle.x > window.innerWidth + 15) particle.x = -15;
+        if (particle.x < -15) particle.x = window.innerWidth + 15;
+        if (particle.y > window.innerHeight + 15) particle.y = -15;
+        if (particle.y < -15) particle.y = window.innerHeight + 15;
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = currentOpacity;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
-        const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
-        grd.addColorStop(0, p.color);
-        grd.addColorStop(1, "transparent");
-        ctx.fillStyle = grd;
-        ctx.globalAlpha = currentOpacity * 0.3;
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${particle.hue}, 100%, 70%, ${particle.opacity})`;
         ctx.fill();
       });
-      ctx.globalAlpha = 1;
-      animId = requestAnimationFrame(animate);
+
+      rafId = requestAnimationFrame(draw);
     };
-    animate();
+
+    draw();
 
     return () => {
+      cancelAnimationFrame(rafId);
       window.removeEventListener("resize", resize);
-      cancelAnimationFrame(animId);
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-[1]"
-      style={{ mixBlendMode: "screen" }}
-    />
-  );
+  return <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-[1] opacity-70" style={{ mixBlendMode: "screen" }} />;
 };
 
 export default FloatingParticles;

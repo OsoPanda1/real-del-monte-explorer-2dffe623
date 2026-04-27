@@ -169,3 +169,17 @@ model Interaction {
   context    String?
   createdAt  DateTime @default(now())
 }
+
+model AiInteractionLog {
+  id          String   @id @default(cuid())
+  userId      String
+  channel     String
+  sourceModel String
+  prompt      String   @db.Text
+  response    String   @db.Text
+  latencyMs   Int
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId, channel])
+}
