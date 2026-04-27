@@ -305,12 +305,18 @@ const TAMVHub = () => {
                   </div>
                 ))}
               </div>
-              <div className="mt-6 flex gap-3">
+              <div className="mt-6 flex flex-wrap gap-3">
                 <Button asChild variant="default" className="bg-[hsl(var(--gold))] hover:bg-[hsl(var(--gold-dark))] text-background">
                   <Link to="/tamv/status">Ver Estado del Nodo Cero</Link>
                 </Button>
                 <Button asChild variant="outline" className="border-[hsl(var(--gold))]/30 text-foreground hover:bg-[hsl(var(--gold))]/10">
                   <Link to="/tamv/api">Explorar API TAMV</Link>
+                </Button>
+                <Button asChild variant="outline" className="border-[hsl(var(--electric))]/40 text-[hsl(var(--electric-light))] hover:bg-[hsl(var(--electric))]/10">
+                  <Link to="/tamv/thesis">
+                    <ScrollText className="w-4 h-4 mr-2" />
+                    Tesis Soberana TAMV
+                  </Link>
                 </Button>
               </div>
             </CardContent>
