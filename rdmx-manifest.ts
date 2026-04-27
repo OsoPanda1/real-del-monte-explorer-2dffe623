@@ -104,6 +104,15 @@ export const RDMX_MODULES: RepoModule[] = [
     entryPoints: ["src/pages/TAMVHub.tsx", "src/stores/tamv/isabellaStore.ts", "server/src/routes/tamv.ts"],
     status: "integrated",
   },
+  {
+    id: "tenochtitlan-kernel",
+    repo: "rdm-digital://core/tenochtitlan",
+    path: "server/src/services/tenochtitlan",
+    type: "backend",
+    description: "Kernel soberano Tenochtitlán: panteón centinela (Anubis, Horus, Dekateotl, Aztek Gods, Ojo de Ra, Ojo de Quetzalcóatl, MOS gemelos, Laberinto), radares paralelos, ID-NVIDA, EOCT, BookPI hash-chained, MD-X4 dual hexagonal pipeline y los 48 nodos funcionales del ecosistema OsoPanda1.",
+    entryPoints: ["server/src/routes/tenochtitlan.ts", "src/pages/Tenochtitlan.tsx"],
+    status: "integrated",
+  },
 ];
 
 export const MODULE_ALIASES: Record<string, string> = {
@@ -116,4 +125,5 @@ export const MODULE_ALIASES: Record<string, string> = {
   "@rdm/civilizational": "packages/civilizational-core/src",
   "@rdm/quantum": "packages/quantum-system-tamv/src",
   "@rdm/tamv": "packages/tamv-online-nextgen/src",
+  "@rdm/tenochtitlan": "server/src/services/tenochtitlan",
 };
