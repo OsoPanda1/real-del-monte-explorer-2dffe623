@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Crown, ArrowRight, ScrollText } from "lucide-react";
+import { Crown, ArrowRight, ScrollText, Network } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const NodoCeroBanner = () => {
@@ -58,6 +58,13 @@ const NodoCeroBanner = () => {
               >
                 Civilization Hub
                 <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/tenochtitlan"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-[hsl(var(--gold))]/40 bg-[hsl(var(--gold))]/5 text-[hsl(var(--gold))] font-body text-xs tracking-[0.25em] uppercase hover:bg-[hsl(var(--gold))]/10 transition-all"
+              >
+                <Network className="w-4 h-4" />
+                Tenochtitlán
               </Link>
             </div>
           </div>
