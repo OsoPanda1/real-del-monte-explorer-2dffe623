@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { usePaginated } from "@/hooks/usePaginated";
 import PaginationControls from "@/components/PaginationControls";
 
@@ -47,23 +47,41 @@ const tierColors: Record<string, string> = {
   L3: "from-muted-foreground to-foreground/40",
 };
 
-type MerchantListResponse = MerchantData[] | { items: MerchantData[] };
-
-const normalizeMerchants = (payload: MerchantListResponse | undefined): MerchantData[] => {
-  if (!payload) return [];
-  return Array.isArray(payload) ? payload : payload.items;
-};
+const visibilityRoles = new Set(["comercio", "merchant", "negocio", "business", "local"]);
 
 const MerchantCatalog = () => {
   const [filter, setFilter] = useState<string | null>(null);
+  const location = useLocation();
 
   const {
     data: merchants,
     meta,
     loading,
-    page,
     goToPage,
   } = usePaginated<MerchantData>("/api/merchants", 1, 12);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const startsBusinessOnboarding = ["1", "true", "yes"].includes(
+      (params.get("startBusinessRegistration") ?? "").toLowerCase(),
+    );
+
+    if (startsBusinessOnboarding) {
+      localStorage.setItem("rdm_business_registration_started", "1");
+    }
+  }, [location.search]);
+
+  const showBusinessOnboarding = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const role = (localStorage.getItem("rdm_user_type") ?? "").toLowerCase().trim();
+    const hasAllowedRole = visibilityRoles.has(role);
+    const businessRegistrationStarted = localStorage.getItem("rdm_business_registration_started") === "1";
+    const startsBusinessOnboarding = ["1", "true", "yes"].includes(
+      (params.get("startBusinessRegistration") ?? "").toLowerCase(),
+    );
+
+    return hasAllowedRole || businessRegistrationStarted || startsBusinessOnboarding;
+  }, [location.search]);
 
   const filtered = filter ? categories.filter((c) => c.tier === filter) : categories;
   const activeMerchants = merchants?.filter((m) => m.isActive) ?? [];
@@ -71,23 +89,25 @@ const MerchantCatalog = () => {
   return (
     <section id="comercios" className="relative py-24">
       <div className="container mx-auto px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-12"
-        >
-          <span className="font-mono text-xs uppercase tracking-widest text-secondary mb-3 block">
-            Catálogo Soberano · Gemelo Digital
-          </span>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tighter uppercase">
-            Únete a la <span className="text-gradient-gold">Federación</span>
-          </h2>
-          <p className="mt-4 text-muted-foreground max-w-xl">
-            Registra tu negocio en el ecosistema digital de Real del Monte.
-            Solo los comercios verificados aparecen en el Gemelo Digital y reciben recomendaciones de Realito AI.
-          </p>
-        </motion.div>
+        {showBusinessOnboarding && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-12"
+          >
+            <span className="font-mono text-xs uppercase tracking-widest text-secondary mb-3 block">
+              Catálogo Soberano · Gemelo Digital
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tighter uppercase">
+              Únete al <span className="text-gradient-gold">Catálogo Digital de Comercio RDM Digital</span>
+            </h2>
+            <p className="mt-4 text-muted-foreground max-w-2xl">
+              Registra tu negocio en el ecosistema digital de Real del Monte. Solo comercios, locales y usuarios
+              que iniciaron su alta de negocio pueden ver y operar esta sección.
+            </p>
+          </motion.div>
+        )}
 
         {/* Active merchants from API (paginated) */}
         {loading && (
@@ -149,7 +169,6 @@ const MerchantCatalog = () => {
               ))}
             </div>
 
-            {/* Pagination controls */}
             {meta && meta.totalPages > 1 && (
               <PaginationControls meta={meta} onPageChange={goToPage} />
             )}
@@ -164,80 +183,94 @@ const MerchantCatalog = () => {
           </motion.div>
         )}
 
-        {/* Tier filters */}
-        <div className="flex gap-3 mb-8 font-mono text-xs uppercase tracking-widest">
-          {[null, "L1", "L2", "L3"].map((tier) => (
-            <button
-              key={tier ?? "all"}
-              onClick={() => setFilter(tier)}
-              className={`px-4 py-2 rounded-lg transition-all border border-border ${
-                filter === tier
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card/40 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tier ?? "Todos"}
-            </button>
-          ))}
-        </div>
+        {showBusinessOnboarding ? (
+          <>
+            <div className="flex gap-3 mb-8 font-mono text-xs uppercase tracking-widest">
+              {[null, "L1", "L2", "L3"].map((tier) => (
+                <button
+                  key={tier ?? "all"}
+                  onClick={() => setFilter(tier)}
+                  className={`px-4 py-2 rounded-lg transition-all border border-border ${
+                    filter === tier
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card/40 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tier ?? "Todos"}
+                </button>
+              ))}
+            </div>
 
-        {/* Pricing cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filtered.map((cat, i) => (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filtered.map((cat, i) => (
+                <motion.div
+                  key={cat.type}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+                  whileHover={{ y: -5 }}
+                  className="relative p-6 glass-surface overflow-hidden group cursor-pointer"
+                >
+                  <div
+                    className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${tierColors[cat.tier]} opacity-60 group-hover:opacity-100 transition-opacity`}
+                  />
+                  <div className="text-2xl mb-3">{cat.icon}</div>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                    Nivel {cat.tier}
+                  </span>
+                  <h3 className="text-lg font-semibold tracking-tight mt-1 mb-4">{cat.type}</h3>
+                  <div className="flex justify-between items-center">
+                    <Link to="/catalogo?startBusinessRegistration=1">
+                      <motion.span
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="btn-sovereign bg-foreground text-background text-[10px] px-4 py-2 inline-block"
+                      >
+                        Registrar
+                      </motion.span>
+                    </Link>
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      ${cat.price} MXN / mes
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
             <motion.div
-              key={cat.type}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.05, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-              whileHover={{ y: -5 }}
-              className="relative p-6 glass-surface overflow-hidden group cursor-pointer"
+              className="mt-8 glass-surface p-6"
             >
-              <div
-                className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${tierColors[cat.tier]} opacity-60 group-hover:opacity-100 transition-opacity`}
-              />
-              <div className="text-2xl mb-3">{cat.icon}</div>
-              <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
-                Nivel {cat.tier}
-              </span>
-              <h3 className="text-lg font-semibold tracking-tight mt-1 mb-4">{cat.type}</h3>
-              <div className="flex justify-between items-center">
-                <Link to="/catalogo">
-                  <motion.span
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="btn-sovereign bg-foreground text-background text-[10px] px-4 py-2 inline-block"
-                  >
-                    Registrar
-                  </motion.span>
-                </Link>
-                <span className="font-mono text-[10px] text-muted-foreground">
-                  ${cat.price} MXN / mes
-                </span>
+              <h4 className="font-mono text-xs uppercase tracking-widest text-secondary mb-4">
+                Servicios adicionales
+              </h4>
+              <div className="space-y-3">
+                {extras.map((extra) => (
+                  <div key={extra.label} className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">{extra.label}</span>
+                    <span className="font-mono text-xs text-foreground">{extra.price}</span>
+                  </div>
+                ))}
               </div>
             </motion.div>
-          ))}
-        </div>
-
-        {/* Extras */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="mt-8 glass-surface p-6"
-        >
-          <h4 className="font-mono text-xs uppercase tracking-widest text-secondary mb-4">
-            Servicios adicionales
-          </h4>
-          <div className="space-y-3">
-            {extras.map((extra) => (
-              <div key={extra.label} className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">{extra.label}</span>
-                <span className="font-mono text-xs text-foreground">{extra.price}</span>
-              </div>
-            ))}
+          </>
+        ) : (
+          <div className="glass-surface p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Esta sección comercial está disponible para comercios, locales y cuentas que iniciaron su registro de
+              negocio.
+            </p>
+            <Link
+              to="/catalogo?startBusinessRegistration=1"
+              className="mt-4 inline-flex btn-sovereign bg-foreground text-background text-xs px-4 py-2"
+            >
+              Iniciar registro de negocio
+            </Link>
           </div>
-        </motion.div>
+        )}
       </div>
     </section>
   );
