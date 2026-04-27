@@ -1,73 +1,110 @@
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 import { Link } from "react-router-dom";
-import { GotaDeMercurioButton } from "@/components/GotaDeMercurioButton";
+import { MapPin, Heart, Mail, Sparkles } from "lucide-react";
+
+const footerLinks = [
+  { label: "Historia", path: "/historia" },
+  { label: "Gastronomía", path: "/gastronomia" },
+  { label: "Cultura", path: "/cultura" },
+  { label: "Rutas", path: "/rutas" },
+  { label: "Ecoturismo", path: "/ecoturismo" },
+  { label: "Arte", path: "/arte" },
+  { label: "Relatos", path: "/relatos" },
+  { label: "Dichos", path: "/dichos" },
+  { label: "Eventos", path: "/eventos" },
+  { label: "Mapa Vivo", path: "/#mapa" },
+  { label: "Catálogo Digital", path: "/catalogo" },
+  { label: "Comunidad", path: "/comunidad" },
+  { label: "Apoya", path: "/donar" },
+  { label: "Quiénes Somos", path: "/quienes-somos" },
+];
 
 const FooterSection = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+
   return (
-    <footer className="border-t border-foreground/5 py-16">
-      <div className="container mx-auto px-6">
-        <div className="grid md:grid-cols-4 gap-12">
-          <div>
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xs">R</span>
+    <footer ref={ref} className="relative" style={{ background: "linear-gradient(180deg, hsl(220,45%,6%) 0%, hsl(220,50%,3%) 100%)" }}>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-1/4 w-64 h-64 rounded-full bg-[hsla(210,100%,55%,0.03)] blur-3xl animate-orb" />
+        <div className="absolute bottom-20 right-1/4 w-48 h-48 rounded-full bg-[hsla(43,80%,55%,0.03)] blur-3xl animate-orb-reverse" />
+      </div>
+
+      <div className="separator-animated w-full" />
+
+      <div className="relative container mx-auto px-6 md:px-12 py-16">
+        <div className="grid md:grid-cols-4 gap-10">
+          <div className="md:col-span-2">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 1 }}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                  style={{ background: "radial-gradient(circle, hsl(43, 80%, 55%), hsl(43, 60%, 35%))", filter: "drop-shadow(0 0 10px hsla(210,100%,55%,0.3))" }}>
+                  <span className="text-xl font-display font-bold" style={{ color: "hsl(220, 45%, 8%)" }}>R</span>
+                </div>
+                <div>
+                  <span className="font-display text-xl font-bold text-foreground">RDM Digital</span>
+                  <div className="flex items-center gap-1 text-[10px] tracking-wider text-[hsl(var(--gold))]/60">
+                    <Sparkles className="w-3 h-3" /> Innovación Turística 2026
+                  </div>
+                </div>
               </div>
-              <span className="font-bold text-sm tracking-tight">
-                RDM<span className="text-primary">·</span>X
-              </span>
-            </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              La primera plataforma urbana 100% digitalizada de México. Real del Monte, Hidalgo.
-            </p>
-            <div className="mt-4">
-              <GotaDeMercurioButton />
-            </div>
-          </div>
-
-          <div>
-            <h4 className="font-mono text-[10px] uppercase tracking-widest text-secondary mb-4">Explorar</h4>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <Link to="/historia" className="block hover:text-foreground transition-colors">Historia</Link>
-              <Link to="/cultura" className="block hover:text-foreground transition-colors">Cultura</Link>
-              <Link to="/arte" className="block hover:text-foreground transition-colors">Arte</Link>
-              <Link to="/gastronomia" className="block hover:text-foreground transition-colors">Gastronomía</Link>
-              <Link to="/ecoturismo" className="block hover:text-foreground transition-colors">Ecoturismo</Link>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="font-mono text-[10px] uppercase tracking-widest text-secondary mb-4">Descubrir</h4>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <Link to="/rutas" className="block hover:text-foreground transition-colors">Rutas Turísticas</Link>
-              <Link to="/relatos" className="block hover:text-foreground transition-colors">Mitos y Leyendas</Link>
-              <Link to="/dichos" className="block hover:text-foreground transition-colors">Dichos Mineros</Link>
-              <Link to="/eventos" className="block hover:text-foreground transition-colors">Eventos</Link>
-              <Link to="/comunidad" className="block hover:text-foreground transition-colors">Muro Global</Link>
-              <Link to="/catalogo" className="block hover:text-foreground transition-colors">Catálogo Digital</Link>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="font-mono text-[10px] uppercase tracking-widest text-secondary mb-4">Datos en Vivo</h4>
-            <div className="space-y-2 font-mono text-xs text-muted-foreground">
-              <p>Altitud: 2,700m s.n.m.</p>
-              <p>Coordenadas: 20.1410°N, 98.6735°W</p>
-              <p>Pueblo Mágico desde 2004</p>
-              <p className="pt-2">
-                <Link to="/quienes-somos" className="text-primary hover:text-foreground transition-colors">
-                  Quiénes Somos →
-                </Link>
+              <p className="text-sm leading-relaxed text-muted-foreground mb-6">
+                Tu guía comunitaria digital para descubrir Real del Monte, Pueblo Mágico de Hidalgo. Servicios de altura para visitantes exigentes.
               </p>
+              <h3 className="font-display text-3xl md:text-4xl tracking-tight mb-4">
+                <span className="text-gradient-gold">La niebla siempre vuelve</span>
+              </h3>
+              <p className="font-display text-base text-[hsl(var(--platinum))]/50 italic max-w-lg">
+                Y con ella, la invitación a perderse entre calles empedradas, ecos mineros y el aroma de un paste recién horneado.
+              </p>
+            </motion.div>
+          </div>
+
+          <div>
+            <h4 className="font-display font-semibold text-foreground mb-4">Explorar</h4>
+            <ul className="space-y-2.5">
+              {footerLinks.slice(0, 7).map((item) => (
+                <li key={item.label}>
+                  <Link to={item.path} className="text-sm text-muted-foreground hover:text-[hsl(var(--gold))] transition-colors duration-300">{item.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-display font-semibold text-foreground mb-4">Descubre</h4>
+            <ul className="space-y-2.5 mb-6">
+              {footerLinks.slice(7).map((item) => (
+                <li key={item.label}>
+                  <Link to={item.path} className="text-sm text-muted-foreground hover:text-[hsl(var(--electric))] transition-colors duration-300">{item.label}</Link>
+                </li>
+              ))}
+            </ul>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="w-4 h-4 shrink-0 text-[hsl(var(--electric))]" /> <span>Real del Monte, Hidalgo</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Mail className="w-4 h-4 shrink-0 text-[hsl(var(--gold))]" /> <span>info@rdmdigital.mx</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-foreground/5 flex flex-col md:flex-row justify-between items-center gap-4">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            © 2026 RDM Digital · Arquitectura Soberana · Edwin Oswaldo Castillo Trejo
-          </span>
-          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Powered by TAMV Kernel · Realito AI
-          </span>
+        <div className="mt-12 pt-8" style={{ borderTop: "1px solid hsla(210,100%,55%,0.08)" }}>
+          <div className="flex flex-col md:flex-row items-center justify-between text-center md:text-left gap-4">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-3 h-3 text-[hsl(var(--gold))]/40" />
+              <p className="font-body text-[10px] text-muted-foreground tracking-wider">© 2026 RDM Digital · Edwin Oswaldo Castillo Trejo</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link to="/donar" className="inline-flex items-center gap-2 text-xs text-[hsl(var(--gold))] hover:text-[hsl(var(--gold-light))] transition-colors">
+                <Heart className="w-3 h-3" /> Apoya RDM Digital
+              </Link>
+              <p className="font-body text-[10px] text-muted-foreground tracking-wider">Powered by Realito AI</p>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

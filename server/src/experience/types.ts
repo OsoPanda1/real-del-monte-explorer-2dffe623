@@ -101,5 +101,11 @@ export interface RealitoChatResponse {
   suggestedActions: SuggestedAction[];
   gaSuggestion?: PlannedRoute | null;
   engine: string;
+  visualStyle?: string;
   twinNodesQueried: number;
+  interactionId?: string;
+  trace?: {
+    interactionId: string;
+    source: string;
+  };
 }

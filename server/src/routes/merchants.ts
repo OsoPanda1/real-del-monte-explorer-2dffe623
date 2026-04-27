@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { paginateArray, extractPaginationParams } from "../services/pagination.js";
 
 const merchantsRouter = Router();
 
@@ -89,11 +90,11 @@ const distanceKm = (a: { lat: number; lng: number }, b: { lat: number; lng: numb
 };
 
 merchantsRouter.get("/", (req, res) => {
-  const page = Math.max(1, Number(req.query.page ?? 1));
-  const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize ?? 10)));
+  const pagination = extractPaginationParams(req.query as Record<string, unknown>);
   const category = typeof req.query.category === "string" ? req.query.category.toUpperCase() : undefined;
   const level = typeof req.query.level === "string" ? req.query.level.toUpperCase() : undefined;
   const isPremium = typeof req.query.isPremium === "string" ? req.query.isPremium === "true" : undefined;
+  const search = typeof req.query.search === "string" ? req.query.search.toLowerCase() : undefined;
   const lat = Number(req.query.lat);
   const lng = Number(req.query.lng);
   const radiusKm = Number(req.query.radiusKm ?? 5);
@@ -112,24 +113,21 @@ merchantsRouter.get("/", (req, res) => {
     result = result.filter((m) => m.isPremium === isPremium);
   }
 
+  if (search) {
+    result = result.filter(
+      (m) =>
+        m.name.toLowerCase().includes(search) ||
+        m.description.toLowerCase().includes(search) ||
+        m.tags.some((t) => t.toLowerCase().includes(search)),
+    );
+  }
+
   if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
     result = result.filter((merchant) => distanceKm(merchant.location, { lat, lng }) <= radiusKm);
   }
 
-  const total = result.length;
-  const offset = (page - 1) * pageSize;
-  const items = result.slice(offset, offset + pageSize);
-
-  const wantsPaginatedResponse = req.query.format === "paginated";
-
-  if (wantsPaginatedResponse) {
-    return res.json({
-      items,
-      pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
-    });
-  }
-
-  return res.json(items);
+  const paginated = paginateArray(result, pagination);
+  return res.json(paginated);
 });
 
 merchantsRouter.get("/:slug", (req, res) => {

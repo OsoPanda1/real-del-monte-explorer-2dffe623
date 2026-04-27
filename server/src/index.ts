@@ -37,10 +37,12 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 export function startServer(port = config.port) {
-  return app.listen(port, () => {
+  const server = app.listen(port, () => {
     // eslint-disable-next-line no-console
     console.log(`RDM backend running on http://localhost:${port}`);
   });
+
+  return server;
 }
 
 const isEntrypoint = process.argv[1] && process.argv[1].endsWith("index.js");
