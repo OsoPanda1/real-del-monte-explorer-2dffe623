@@ -47,6 +47,13 @@ const tierColors: Record<string, string> = {
   L3: "from-muted-foreground to-foreground/40",
 };
 
+type MerchantListResponse = MerchantData[] | { items: MerchantData[] };
+
+const normalizeMerchants = (payload: MerchantListResponse | undefined): MerchantData[] => {
+  if (!payload) return [];
+  return Array.isArray(payload) ? payload : payload.items;
+};
+
 const MerchantCatalog = () => {
   const [filter, setFilter] = useState<string | null>(null);
 
