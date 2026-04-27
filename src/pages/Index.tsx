@@ -1,5 +1,6 @@
 import MainLayout from "@/components/layout/MainLayout";
 import HeroSection from "@/components/HeroSection";
+import NodoCeroBanner from "@/components/NodoCeroBanner";
 import SitesSection from "@/components/SitesSection";
 import QuickLinksSection from "@/components/QuickLinksSection";
 import MapSection from "@/components/MapSection";
@@ -11,6 +12,7 @@ const Index = () => {
     <MainLayout>
       <SEOMeta {...PAGE_SEO.home} />
       <HeroSection />
+      <NodoCeroBanner />
       <SitesSection />
       <QuickLinksSection />
       <div id="mapa">
