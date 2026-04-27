@@ -218,3 +218,36 @@
 .leaflet-popup-tip {
   background: hsla(220, 25%, 10%, 0.95);
 }
+
+@layer base {
+  body {
+    background-image:
+      radial-gradient(circle at 12% 10%, hsla(198, 100%, 60%, 0.08), transparent 24%),
+      radial-gradient(circle at 85% 5%, hsla(43, 100%, 60%, 0.06), transparent 20%);
+    background-attachment: fixed;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsla(220, 28%, 8%, 0.9);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: linear-gradient(180deg, hsla(198, 100%, 62%, 0.5), hsla(43, 100%, 58%, 0.5));
+    border: 2px solid hsla(220, 28%, 8%, 0.9);
+  }
+}
+
+@layer utilities {
+  .panel-futuristic {
+    border: 1px solid hsla(198, 90%, 70%, 0.2);
+    background: linear-gradient(150deg, hsla(223, 24%, 14%, 0.72), hsla(222, 28%, 7%, 0.72));
+    box-shadow: 0 20px 70px -45px hsla(196, 100%, 60%, 0.5);
+    backdrop-filter: blur(18px);
+  }
+}

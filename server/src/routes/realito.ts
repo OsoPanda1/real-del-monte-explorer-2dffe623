@@ -11,6 +11,7 @@ import { db } from "../lib/store.js";
 import { handleRealitoChat } from "../experience/realitoController.js";
 import { config } from "../config.js";
 import { createRateLimiter } from "../middleware/rateLimit.js";
+import { SovereignEngine } from "../services/protocol/sovereign.engine.js";
 
 // ============================================================================
 // Esquema de validación de entrada
@@ -104,6 +105,27 @@ realitoRouter.post("/chat", async (req, res) => {
       db.interactions.set(interactionId, entry);
     }
   }
+});
+
+
+realitoRouter.post("/sovereign", async (req, res) => {
+  const prompt = typeof req.body?.prompt === "string" ? req.body.prompt.trim() : "";
+
+  if (!prompt) {
+    return res.status(400).json({ error: "prompt is required" });
+  }
+
+  const answer = await SovereignEngine.processRequest(
+    {
+      channel: "realito",
+      userId: req.body?.userId,
+      locale: req.body?.locale,
+      twin: req.body?.twin,
+    },
+    prompt,
+  );
+
+  return res.json({ answer });
 });
 
 export default realitoRouter;
