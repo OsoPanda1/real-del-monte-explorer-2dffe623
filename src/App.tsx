@@ -28,6 +28,7 @@ const TAMVHub = lazy(() => import("./pages/TAMVHub"));
 const TAMVStatus = lazy(() => import("./pages/TAMVStatus"));
 const TAMVApiExplorer = lazy(() => import("./pages/TAMVApiExplorer"));
 const TAMVThesis = lazy(() => import("./pages/TAMVThesis"));
+const Tenochtitlan = lazy(() => import("./pages/Tenochtitlan"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const AnimatedRoutes = () => {
           <Route path="/tamv/status" element={<TAMVStatus />} />
           <Route path="/tamv/api" element={<TAMVApiExplorer />} />
           <Route path="/tamv/thesis" element={<TAMVThesis />} />
+          <Route path="/tenochtitlan" element={<Tenochtitlan />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

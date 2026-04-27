@@ -318,6 +318,12 @@ const TAMVHub = () => {
                     Tesis Soberana TAMV
                   </Link>
                 </Button>
+                <Button asChild className="bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--gold-dark))] text-[hsl(var(--navy-dark))] font-semibold">
+                  <Link to="/tenochtitlan">
+                    <Network className="w-4 h-4 mr-2" />
+                    System Tenochtitlán
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>

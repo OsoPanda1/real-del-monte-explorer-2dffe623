@@ -79,6 +79,13 @@ const MODULES: ModuleStatus[] = [
     status: "integrated",
     version: "3.0.0",
   },
+  {
+    id: "tenochtitlan-kernel",
+    type: "core",
+    description: "Kernel soberano: 9 centinelas, 6 radares, 48 nodos, BookPI hash-chained, MD-X4 dual hexagonal",
+    status: "integrated",
+    version: "1.0.0",
+  },
 ];
 
 rdmxStatusRouter.get("/status", (_req, res) => {

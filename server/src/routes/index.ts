@@ -25,6 +25,7 @@ import rdmxStatusRouter from "./rdmx-status.js";
 import geolocationRouter from "./geolocation.js";
 import tamvRouter from "./tamv.js";
 import tamvThesisRouter from "./tamv-thesis.js";
+import tenochtitlanRouter from "./tenochtitlan.js";
 
 const apiRouter = Router();
 
@@ -54,5 +55,6 @@ apiRouter.use("/rdmx", rdmxStatusRouter);
 apiRouter.use("/geolocation", geolocationRouter);
 apiRouter.use("/tamv", tamvRouter);
 apiRouter.use("/tamv", tamvThesisRouter);
+apiRouter.use("/tenochtitlan", tenochtitlanRouter);
 
 export default apiRouter;
